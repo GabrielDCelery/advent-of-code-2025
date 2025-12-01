@@ -46,7 +46,7 @@ func NewDial(passwordMethod string) (*Dial, error) {
 	case "CLICK":
 		dial.passwordMethod = passwordMethodClick
 	default:
-		return &Dial{}, fmt.Errorf("unhandled password method %s", passwordMethod)
+		return nil, fmt.Errorf("unhandled password method %s", passwordMethod)
 	}
 	return dial, nil
 }
@@ -66,17 +66,17 @@ func (d *Dial) GetPassword(reader io.Reader) (int, error) {
 }
 
 func (d *Dial) turnDialUsingInstruction(line string) error {
-	dirRight := true
+	if len(line) == 0 {
+		return fmt.Errorf("instruction can not be empty")
+	}
 	direction := line[:1]
 	if direction != "L" && direction != "R" {
-		return fmt.Errorf("unknown instruction %s", direction)
+		return fmt.Errorf("unhandled instruction direction %s", line)
 	}
-	if direction == "L" {
-		dirRight = false
-	}
+	dirRight := direction == "R"
 	amount, err := strconv.Atoi(line[1:])
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid amount in instruction %s", line)
 	}
 	for i := range amount {
 		if dirRight {
@@ -85,7 +85,11 @@ func (d *Dial) turnDialUsingInstruction(line string) error {
 			d.ring = d.ring.Prev()
 		}
 
-		shouldIncrementPassword := d.ring.Value.(int) == 0 && ((d.passwordMethod == passwordMethodEnd && i+1 == amount) || (d.passwordMethod == passwordMethodClick))
+		isAtZero := d.ring.Value.(int) == 0
+		isEndOfMove := (i + 1) == amount
+		isEndMethod := isEndOfMove && d.passwordMethod == passwordMethodEnd
+		isClickMethod := d.passwordMethod == passwordMethodClick
+		shouldIncrementPassword := isAtZero && (isEndMethod || isClickMethod)
 
 		if shouldIncrementPassword {
 			d.password += 1
