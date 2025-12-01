@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/GabrielDCelery/advent-of-code-2025/internals/day_01"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -23,7 +24,8 @@ func main() {
 		log.Fatalf("failed to open file at path %s", *filePath)
 	}
 	defer file.Close()
-	dial, err := day_01.NewDial(*passwordMethod)
+	logger := zap.NewExample()
+	dial, err := day_01.NewDial(*passwordMethod, logger)
 	if err != nil {
 		log.Fatalf("failed to instantiate dial %v", err)
 	}

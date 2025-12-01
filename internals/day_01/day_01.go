@@ -5,10 +5,10 @@ import (
 	"container/ring"
 	"fmt"
 	"io"
-	"log"
-	"os"
 	"strconv"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
 const defaultRingSize = 100
@@ -20,17 +20,21 @@ const (
 )
 
 type Dial struct {
-	logger         *log.Logger
+	logger         *zap.Logger
 	ring           *ring.Ring
 	password       int
 	passwordMethod int
 }
 
-func NewDial(passwordMethod string) (*Dial, error) {
+func NewDial(passwordMethod string, logger *zap.Logger) (*Dial, error) {
 	ringSize := defaultRingSize
 	ringPosition := defaultRingPosition
+	if logger == nil {
+		logger = zap.NewNop()
+	}
+	logger = logger.With(zap.String("passwordMethod", passwordMethod))
 	dial := &Dial{
-		logger:         log.New(os.Stdout, "", log.Lshortfile),
+		logger:         logger,
 		ring:           ring.New(ringSize),
 		password:       0,
 		passwordMethod: 0,
@@ -52,7 +56,6 @@ func NewDial(passwordMethod string) (*Dial, error) {
 }
 
 func (d *Dial) GetPassword(reader io.Reader) (int, error) {
-	d.logger.Printf("The dial starts at position %d\n", d.ring.Value.(int))
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -61,7 +64,7 @@ func (d *Dial) GetPassword(reader io.Reader) (int, error) {
 			return 0, err
 		}
 	}
-	d.logger.Printf("The password is %d\n", d.password)
+	d.logger.Info("password retrieved", zap.Int("password", d.password))
 	return d.password, nil
 }
 
@@ -95,6 +98,11 @@ func (d *Dial) turnDialUsingInstruction(line string) error {
 			d.password += 1
 		}
 	}
-	d.logger.Printf("The dial is rotated %s to point at %d\n", line, d.ring.Value.(int))
+	d.logger.Debug(
+		"dial rotated",
+		zap.String("command", line),
+		zap.Int("postion", d.ring.Value.(int)),
+		zap.Int("password", d.password),
+	)
 	return nil
 }

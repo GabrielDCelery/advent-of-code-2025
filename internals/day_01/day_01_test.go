@@ -12,7 +12,7 @@ func TestDial(t *testing.T) {
 		t.Parallel()
 		// given
 		reader := strings.NewReader("L68\nL30\nR48\nL5\nR60\nL55\nL1\nL99\nR14\nL82")
-		dial, dialErr := NewDial("end")
+		dial, dialErr := NewDial("end", nil)
 
 		// when
 		result, err := dial.GetPassword(reader)
@@ -27,7 +27,7 @@ func TestDial(t *testing.T) {
 		t.Parallel()
 		// given
 		reader := strings.NewReader("L68\nL30\nR48\nL5\nR60\nL55\nL1\nL99\nR14\nL82")
-		dial, dialErr := NewDial("click")
+		dial, dialErr := NewDial("click", nil)
 
 		// when
 		result, err := dial.GetPassword(reader)
