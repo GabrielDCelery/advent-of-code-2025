@@ -1,0 +1,10 @@
+[tools]
+go = "1.24"
+
+[tasks.bootstrap]
+description = "bootstrap the project"
+run = ["go mod tidy"]
+
+[tasks.build]
+description = "build binaries"
+run = ["mkdir -p bin", "go build -o ./bin/day_01 ./cmd/day_01/main.go"]
