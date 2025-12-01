@@ -7,22 +7,39 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
+)
+
+const (
+	pEnd   = 0x454E44
+	pClick = 0x434C49434B
 )
 
 type Dial struct {
-	logger   *log.Logger
-	position int
-	size     int
-	password int
+	logger         *log.Logger
+	position       int
+	size           int
+	password       int
+	passwordMethod int
 }
 
-func NewDial() *Dial {
-	return &Dial{
-		logger:   log.New(os.Stdout, "", log.Lshortfile),
-		position: 50,
-		size:     100,
-		password: 0,
+func NewDial(passwordMethod string) (*Dial, error) {
+	dial := &Dial{
+		logger:         log.New(os.Stdout, "", log.Lshortfile),
+		position:       50,
+		size:           100,
+		password:       0,
+		passwordMethod: 0,
 	}
+	switch strings.ToUpper(passwordMethod) {
+	case "END":
+		dial.passwordMethod = pEnd
+	case "CLICK":
+		dial.passwordMethod = pClick
+	default:
+		return &Dial{}, fmt.Errorf("unhandled password method %s", passwordMethod)
+	}
+	return dial, nil
 }
 
 func (d *Dial) GetPassword(reader io.Reader) (int, error) {
