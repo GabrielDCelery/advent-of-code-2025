@@ -8,15 +8,33 @@ import (
 )
 
 func TestDial(t *testing.T) {
-	// given
-	reader := strings.NewReader("L68\nL30\nR48\nL5\nR60\nL55\nL1\nL99\nR14\nL82")
-	dial, dialErr := NewDial("end")
+	t.Run("Correctly handles input with 'end' password method", func(t *testing.T) {
+		t.Parallel()
+		// given
+		reader := strings.NewReader("L68\nL30\nR48\nL5\nR60\nL55\nL1\nL99\nR14\nL82")
+		dial, dialErr := NewDial("end")
 
-	// when
-	result, err := dial.GetPassword(reader)
+		// when
+		result, err := dial.GetPassword(reader)
 
-	// then
-	assert.NoError(t, dialErr)
-	assert.NoError(t, err)
-	assert.Equal(t, 3, result)
+		// then
+		assert.NoError(t, dialErr)
+		assert.NoError(t, err)
+		assert.Equal(t, 3, result)
+	})
+
+	t.Run("Correctly handles input with 'click' password method", func(t *testing.T) {
+		t.Parallel()
+		// given
+		reader := strings.NewReader("L68\nL30\nR48\nL5\nR60\nL55\nL1\nL99\nR14\nL82")
+		dial, dialErr := NewDial("click")
+
+		// when
+		result, err := dial.GetPassword(reader)
+
+		// then
+		assert.NoError(t, dialErr)
+		assert.NoError(t, err)
+		assert.Equal(t, 6, result)
+	})
 }

@@ -79,7 +79,8 @@ func (d *Dial) turnDialUsingInstruction(line string) error {
 			// do nothing
 		}
 		d.position = next
-		if i+1 == amount && d.position == 0 {
+		shouldIncrementPassword := d.position == 0 && ((d.passwordMethod == pEnd && i+1 == amount) || (d.passwordMethod == pClick))
+		if shouldIncrementPassword {
 			d.password += 1
 		}
 	}
