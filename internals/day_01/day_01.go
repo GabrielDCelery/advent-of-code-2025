@@ -56,9 +56,10 @@ func (d *Dial) turnDialUsingInstruction(line string) error {
 		next := d.position + sign
 		if next == d.size && sign == 1 {
 			next = 0
-		}
-		if next == -1 && sign == -1 {
+		} else if next == -1 && sign == -1 {
 			next = d.size - 1
+		} else {
+			// do nothing
 		}
 		d.position = next
 		if i+1 == amount && d.position == 0 {
