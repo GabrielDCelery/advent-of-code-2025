@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math"
 	"os"
 	"strconv"
 )
@@ -14,6 +13,7 @@ type Dial struct {
 	logger   *log.Logger
 	position int
 	size     int
+	password int
 }
 
 func NewDial() *Dial {
@@ -21,12 +21,12 @@ func NewDial() *Dial {
 		logger:   log.New(os.Stdout, "", log.Lshortfile),
 		position: 50,
 		size:     100,
+		password: 0,
 	}
 }
 
 func (d *Dial) GetPassword(reader io.Reader) (int, error) {
 	d.logger.Printf("The dial starts at position %d\n", d.position)
-	password := 0
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -34,13 +34,9 @@ func (d *Dial) GetPassword(reader io.Reader) (int, error) {
 		if err != nil {
 			return 0, err
 		}
-		if d.position == 0 {
-			password += 1
-		}
-		d.logger.Printf("The dial is rotated %s to point at %d\n", line, d.position)
 	}
-	d.logger.Printf("The password is %d\n", password)
-	return password, nil
+	d.logger.Printf("The password is %d\n", d.password)
+	return d.password, nil
 }
 
 func (d *Dial) turnDialUsingInstruction(line string) error {
@@ -56,11 +52,19 @@ func (d *Dial) turnDialUsingInstruction(line string) error {
 	if err != nil {
 		return err
 	}
-	position := int(math.Remainder(float64(d.position+sign*amount), float64(d.size)))
-	if position >= 0 {
-		d.position = position
-	} else {
-		d.position = d.size + position
+	for i := range amount {
+		next := d.position + sign
+		if next == d.size && sign == 1 {
+			next = 0
+		}
+		if next == -1 && sign == -1 {
+			next = d.size - 1
+		}
+		d.position = next
+		if i+1 == amount && d.position == 0 {
+			d.password += 1
+		}
 	}
+	d.logger.Printf("The dial is rotated %s to point at %d\n", line, d.position)
 	return nil
 }
