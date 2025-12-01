@@ -2,6 +2,7 @@ package day_01
 
 import (
 	"bufio"
+	"container/ring"
 	"fmt"
 	"io"
 	"log"
@@ -10,32 +11,40 @@ import (
 	"strings"
 )
 
+const defaultRingSize = 100
+const defaultRingPosition = 50
+
 const (
-	pEnd   = 0x454E44
-	pClick = 0x434C49434B
+	passwordMethodEnd   = 0x454E44
+	passwordMethodClick = 0x434C49434B
 )
 
 type Dial struct {
 	logger         *log.Logger
-	position       int
-	size           int
+	ring           *ring.Ring
 	password       int
 	passwordMethod int
 }
 
 func NewDial(passwordMethod string) (*Dial, error) {
+	ringSize := defaultRingSize
+	ringPosition := defaultRingPosition
 	dial := &Dial{
 		logger:         log.New(os.Stdout, "", log.Lshortfile),
-		position:       50,
-		size:           100,
+		ring:           ring.New(ringSize),
 		password:       0,
 		passwordMethod: 0,
 	}
+	for i := range ringSize {
+		dial.ring.Value = i
+		dial.ring = dial.ring.Next()
+	}
+	dial.ring = dial.ring.Move(ringPosition)
 	switch strings.ToUpper(passwordMethod) {
 	case "END":
-		dial.passwordMethod = pEnd
+		dial.passwordMethod = passwordMethodEnd
 	case "CLICK":
-		dial.passwordMethod = pClick
+		dial.passwordMethod = passwordMethodClick
 	default:
 		return &Dial{}, fmt.Errorf("unhandled password method %s", passwordMethod)
 	}
@@ -43,7 +52,7 @@ func NewDial(passwordMethod string) (*Dial, error) {
 }
 
 func (d *Dial) GetPassword(reader io.Reader) (int, error) {
-	d.logger.Printf("The dial starts at position %d\n", d.position)
+	d.logger.Printf("The dial starts at position %d\n", d.ring.Value.(int))
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -57,33 +66,31 @@ func (d *Dial) GetPassword(reader io.Reader) (int, error) {
 }
 
 func (d *Dial) turnDialUsingInstruction(line string) error {
-	sign := 1
+	dirRight := true
 	direction := line[:1]
 	if direction != "L" && direction != "R" {
 		return fmt.Errorf("unknown instruction %s", direction)
 	}
 	if direction == "L" {
-		sign = -1
+		dirRight = false
 	}
 	amount, err := strconv.Atoi(line[1:])
 	if err != nil {
 		return err
 	}
 	for i := range amount {
-		next := d.position + sign
-		if next == d.size && sign == 1 {
-			next = 0
-		} else if next == -1 && sign == -1 {
-			next = d.size - 1
+		if dirRight {
+			d.ring = d.ring.Next()
 		} else {
-			// do nothing
+			d.ring = d.ring.Prev()
 		}
-		d.position = next
-		shouldIncrementPassword := d.position == 0 && ((d.passwordMethod == pEnd && i+1 == amount) || (d.passwordMethod == pClick))
+
+		shouldIncrementPassword := d.ring.Value.(int) == 0 && ((d.passwordMethod == passwordMethodEnd && i+1 == amount) || (d.passwordMethod == passwordMethodClick))
+
 		if shouldIncrementPassword {
 			d.password += 1
 		}
 	}
-	d.logger.Printf("The dial is rotated %s to point at %d\n", line, d.position)
+	d.logger.Printf("The dial is rotated %s to point at %d\n", line, d.ring.Value.(int))
 	return nil
 }
