@@ -12,9 +12,9 @@ import (
 )
 
 func main() {
-	validatorOpt, ok := os.LookupEnv("VALIDATOROPT")
+	validatorOpt, ok := os.LookupEnv("VALIDATOR")
 	if !ok {
-		validatorOpt = day_02.SomeSequenceRepeatedTwice
+		validatorOpt = day_02.ProductIDHasExactRepeat
 	}
 	logLevel, ok := os.LookupEnv("LOGLEVEL")
 	if !ok {

@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	SomeSequenceRepeatedTwice        string = "repeated"
-	SomeSequenceRepeatedAtleastTwice string = "repeatedatleasttwice"
+	ProductIDHasExactRepeat string = "exactrepeat"
+	ProductIDHasAnyRepeat   string = "anyrepeat"
 )
 
 type Day2Solver struct {
@@ -31,10 +31,10 @@ func NewDay2Solver(logger *zap.Logger, productValidator string) (*Day2Solver, er
 		isProductIDInvalid: nil,
 	}
 	switch productValidator {
-	case SomeSequenceRepeatedTwice:
-		day2Solver.isProductIDInvalid = isSequenceRepeatedTwiceInID
-	case SomeSequenceRepeatedAtleastTwice:
-		day2Solver.isProductIDInvalid = isSequenceRepeatedAtLeastTwiceInID
+	case ProductIDHasExactRepeat:
+		day2Solver.isProductIDInvalid = productIDHasExactRepeat
+	case ProductIDHasAnyRepeat:
+		day2Solver.isProductIDInvalid = productIDHasAnyRepeat
 	default:
 		return nil, fmt.Errorf("unhandled product validator %s", productValidator)
 	}
@@ -112,12 +112,12 @@ func convertProductIDRangeToMinMax(productIDRange string) (int, int, error) {
 
 type isIDInvalidFunc func(id string) bool
 
-func isSequenceRepeatedTwiceInID(id string) bool {
+func productIDHasExactRepeat(id string) bool {
 	sequenceLen := ((len(id) + 1) / 2)
 	return isSequenceRepeating(id, sequenceLen)
 }
 
-func isSequenceRepeatedAtLeastTwiceInID(id string) bool {
+func productIDHasAnyRepeat(id string) bool {
 	for sequenceLen := 1; sequenceLen <= (len(id) / 2); sequenceLen++ {
 		if isSequenceRepeating(id, sequenceLen) {
 			return true
