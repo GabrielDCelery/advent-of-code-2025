@@ -10,24 +10,14 @@ import (
 )
 
 func main() {
-	logLevel, ok := os.LookupEnv("LOGLEVEL")
-
-	if !ok {
-		logLevel = "info"
-	}
-
 	filePath := flag.String("file", "", "input file path")
-
-	passwordMethod := flag.String("method", "end", "password method")
+	passwordMethod := flag.String("passwordMethod", "end", "password method (end or click)")
+	logLevel := flag.String("logLevel", "info", "log level for application")
 
 	flag.Parse()
 
 	if *filePath == "" {
-		log.Fatalf("missing param 'file', received %s", *filePath)
-	}
-
-	if *passwordMethod == "" {
-		log.Fatalf("missing param 'method', received %s", *passwordMethod)
+		log.Fatalf("missing flag: -file")
 	}
 
 	file, err := os.Open(*filePath)
@@ -38,7 +28,7 @@ func main() {
 
 	defer file.Close()
 
-	logger := logging.NewLogger(logLevel)
+	logger := logging.NewLogger(*logLevel)
 	defer logger.Sync()
 
 	dial, err := day_01.NewDial(*passwordMethod, logger)
