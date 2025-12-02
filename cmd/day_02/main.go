@@ -44,7 +44,10 @@ func main() {
 		atom,
 	))
 	defer logger.Sync()
-	day2Solver := day_02.NewDay2Solver(logger)
+	day2Solver, err := day_02.NewDay2Solver(logger, day_02.SomeSequenceRepeatedTwice)
+	if err != nil {
+		logger.Fatal("failed to instantiate day 2 problem solver", zap.Error(err))
+	}
 	solution, err := day2Solver.Solve(context.Background(), file)
 	if err != nil {
 		logger.Fatal("failed to run day 2 problem solver", zap.Error(err))
