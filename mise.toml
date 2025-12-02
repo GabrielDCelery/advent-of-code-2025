@@ -7,4 +7,8 @@ run = ["go mod tidy"]
 
 [tasks.build]
 description = "build binaries"
-run = ["mkdir -p bin", "go build -o ./bin/day_01 ./cmd/day_01/main.go"]
+run = [
+    "mkdir -p bin",
+    "go build -o ./bin/day_01 ./cmd/day_01/main.go",
+    "go build -o ./bin/day_02 ./cmd/day_02/main.go",
+]

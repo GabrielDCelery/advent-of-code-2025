@@ -24,4 +24,33 @@ func TestDay2Solver(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 1227775554, result)
 	})
+
+	// t.Run("correctly counts the number of invalid product IDs in a given range", func(t *testing.T) {
+	// 	t.Parallel()
+	// 	tests := []struct {
+	// 		min      int
+	// 		max      int
+	// 		expected int
+	// 	}{
+	// 		{min: 11, max: 22, expected: 2},
+	// 		{min: 95, max: 115, expected: 1},
+	// 		{min: 998, max: 1012, expected: 1},
+	// 		{min: 1188511880, max: 1188511890, expected: 1},
+	// 		{min: 222220, max: 222224, expected: 1},
+	// 		{min: 1698522, max: 1698528, expected: 0},
+	// 		{min: 446443, max: 446449, expected: 1},
+	// 		{min: 38593856, max: 38593862, expected: 1},
+	// 	}
+	//
+	// 	for _, tt := range tests {
+	// 		t.Run(fmt.Sprintf("correctly calculates invalid product ID count between %d and %d", tt.min, tt.max), func(t *testing.T) {
+	// 			t.Parallel()
+	// 			//when
+	// 			count := getInvalidIDs(context.Background(), tt.min, tt.max)
+	//
+	// 			//then
+	// 			assert.Equal(t, tt.expected, count)
+	// 		})
+	// 	}
+	// })
 }
