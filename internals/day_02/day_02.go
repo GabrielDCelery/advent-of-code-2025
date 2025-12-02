@@ -113,22 +113,17 @@ func convertProductIDRangeToMinMax(productIDRange string) (int, int, error) {
 type isIDInvalidFunc func(id string) bool
 
 func isSequenceRepeatedTwiceInID(id string) bool {
-	sequenceLenStart := (len(id) + 1) / 2
-	return !isValidID(id, sequenceLenStart)
+	sequenceLen := ((len(id) + 1) / 2)
+	return isSequenceRepeating(id, sequenceLen)
 }
 
 func isSequenceRepeatedAtLeastTwiceInID(id string) bool {
-	sequenceLenStart := 1
-	return !isValidID(id, sequenceLenStart)
-}
-
-func isValidID(id string, sequenceLenStart int) bool {
-	for i := sequenceLenStart; i <= (len(id) / 2); i++ {
-		if isSequenceRepeating(id, i) {
-			return false
+	for sequenceLen := 1; sequenceLen <= (len(id) / 2); sequenceLen++ {
+		if isSequenceRepeating(id, sequenceLen) {
+			return true
 		}
 	}
-	return true
+	return false
 }
 
 func isSequenceRepeating(data string, sequenceLen int) bool {
