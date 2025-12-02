@@ -18,8 +18,8 @@ const (
 )
 
 type Day2Solver struct {
-	logger           *zap.Logger
-	productValidator string
+	logger             *zap.Logger
+	isProductIDInvalid isIDInvalidFunc
 }
 
 func NewDay2Solver(logger *zap.Logger, productValidator string) (*Day2Solver, error) {
@@ -27,8 +27,16 @@ func NewDay2Solver(logger *zap.Logger, productValidator string) (*Day2Solver, er
 		logger = zap.NewExample()
 	}
 	day2Solver := &Day2Solver{
-		logger:           logger,
-		productValidator: productValidator,
+		logger:             logger,
+		isProductIDInvalid: nil,
+	}
+	switch productValidator {
+	case SomeSequenceRepeatedTwice:
+		day2Solver.isProductIDInvalid = isSequenceRepeatedTwiceInID
+	case SomeSequenceRepeatedAtleastTwice:
+		day2Solver.isProductIDInvalid = isSequenceRepeatedAtLeastTwiceInID
+	default:
+		return nil, fmt.Errorf("unhandled product validator %s", productValidator)
 	}
 	return day2Solver, nil
 }
@@ -53,20 +61,10 @@ func (d *Day2Solver) Solve(ctx context.Context, reader io.Reader) (int, error) {
 				return 0, nil
 			default:
 				id := strconv.Itoa(i)
-				var sequenceLenStart int
-				switch d.productValidator {
-				case SomeSequenceRepeatedTwice:
-					sequenceLenStart = (len(id) + 1) / 2
-				case SomeSequenceRepeatedAtleastTwice:
-					sequenceLenStart = 1
-				default:
-					return 0, fmt.Errorf("unhandled product validator %s", d.productValidator)
-				}
-				if !isValidID(id, sequenceLenStart) {
+				if d.isProductIDInvalid(id) {
 					d.logger.Debug("found invalid product ID",
 						zap.Int("productID", i),
 						zap.String("productIDRange", productIDRange),
-						zap.Int("sequenceLenStart", sequenceLenStart),
 					)
 					invalidIDSum += i
 				}
@@ -110,6 +108,18 @@ func convertProductIDRangeToMinMax(productIDRange string) (int, int, error) {
 		return 0, 0, fmt.Errorf("failed to get maximum product ID from %s, reason: %v", productIDRange, err)
 	}
 	return min, max, nil
+}
+
+type isIDInvalidFunc func(id string) bool
+
+func isSequenceRepeatedTwiceInID(id string) bool {
+	sequenceLenStart := (len(id) + 1) / 2
+	return !isValidID(id, sequenceLenStart)
+}
+
+func isSequenceRepeatedAtLeastTwiceInID(id string) bool {
+	sequenceLenStart := 1
+	return !isValidID(id, sequenceLenStart)
 }
 
 func isValidID(id string, sequenceLenStart int) bool {
