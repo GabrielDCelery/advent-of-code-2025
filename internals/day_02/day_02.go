@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"math"
 	"strconv"
 	"strings"
 
@@ -35,7 +34,7 @@ func NewDay2Solver(logger *zap.Logger, productValidator string) (*Day2Solver, er
 }
 
 func (d *Day2Solver) Solve(ctx context.Context, reader io.Reader) (int, error) {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	scanner := createProductIdInputScanner(reader)
@@ -48,7 +47,6 @@ func (d *Day2Solver) Solve(ctx context.Context, reader io.Reader) (int, error) {
 		if err != nil {
 			return 0, err
 		}
-		sum := 0
 		for i := min; i <= max; i++ {
 			select {
 			case <-ctx.Done():
@@ -58,7 +56,7 @@ func (d *Day2Solver) Solve(ctx context.Context, reader io.Reader) (int, error) {
 				var sequenceLenStart int
 				switch d.productValidator {
 				case SomeSequenceRepeatedTwice:
-					sequenceLenStart = int(math.Ceil(float64(len(id)) / 2))
+					sequenceLenStart = (len(id) + 1) / 2
 				case SomeSequenceRepeatedAtleastTwice:
 					sequenceLenStart = 1
 				default:
@@ -70,11 +68,10 @@ func (d *Day2Solver) Solve(ctx context.Context, reader io.Reader) (int, error) {
 						zap.String("productIDRange", productIDRange),
 						zap.Int("sequenceLenStart", sequenceLenStart),
 					)
-					sum += i
+					invalidIDSum += i
 				}
 			}
 		}
-		invalidIDSum += sum
 	}
 
 	return invalidIDSum, nil
@@ -101,6 +98,9 @@ func createProductIdInputScanner(reader io.Reader) *bufio.Scanner {
 
 func convertProductIDRangeToMinMax(productIDRange string) (int, int, error) {
 	ids := strings.Split(productIDRange, "-")
+	if len(ids) != 2 {
+		return 0, 0, fmt.Errorf("failed to split product ID range %s", productIDRange)
+	}
 	min, err := strconv.Atoi(ids[0])
 	if err != nil {
 		return 0, 0, fmt.Errorf("failed to get minimum product ID from %s, reason: %v", productIDRange, err)
@@ -125,12 +125,14 @@ func isSequenceRepeating(data string, sequenceLen int) bool {
 	if sequenceLen > (len(data) / 2) {
 		return false
 	}
-	if math.Remainder(float64(len(data)), float64(sequenceLen)) != 0 {
+	if (len(data) % sequenceLen) != 0 {
 		return false
 	}
 	for i := 1; i < (len(data) / sequenceLen); i++ {
-		if data[0:sequenceLen] != data[i*sequenceLen:((i+1)*sequenceLen)] {
-			return false
+		for j := range sequenceLen {
+			if data[j] != data[j+i*sequenceLen] {
+				return false
+			}
 		}
 	}
 	return true
