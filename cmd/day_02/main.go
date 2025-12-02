@@ -13,30 +13,25 @@ import (
 )
 
 func main() {
-	logLevel, ok := os.LookupEnv("LOGLEVEL")
-
-	if !ok {
-		logLevel = "info"
-	}
-
 	validator := flag.String("validator", day_02.ProductIDHasExactRepeat, "validation method (exactrepeat or anyrepeat)")
 	filePath := flag.String("file", "", "path to the input file containing product ID ranges")
+	logLevel := flag.String("logLevel", "info", "log level for application")
 
 	flag.Parse()
 
 	if *filePath == "" {
-		log.Fatalf("missing param 'file', received %s", *filePath)
+		log.Fatalf("missing required flag: -flag")
 	}
 
 	file, err := os.Open(*filePath)
 
 	if err != nil {
-		log.Fatalf("failed to open file at path %s", *filePath)
+		log.Fatalf("failed to open file at path %s: %v", *filePath, err)
 	}
 
 	defer file.Close()
 
-	logger := logging.NewLogger(logLevel)
+	logger := logging.NewLogger(*logLevel)
 	defer logger.Sync()
 
 	day2Solver, err := day_02.NewDay2Solver(logger, *validator)
