@@ -7,13 +7,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/GabrielDCelery/advent-of-code-2025/internals/day_02"
+	"github.com/GabrielDCelery/advent-of-code-2025/internals/day02"
 	"github.com/GabrielDCelery/advent-of-code-2025/internals/logging"
 	"go.uber.org/zap"
 )
 
 func main() {
-	validator := flag.String("validator", day_02.ProductIDHasExactRepeat, "validation method (exactrepeat or anyrepeat)")
+	validator := flag.String("validator", day02.ProductIDHasExactRepeat, "validation method (exactrepeat or anyrepeat)")
 	filePath := flag.String("file", "", "path to the input file containing product ID ranges")
 	logLevel := flag.String("logLevel", "info", "log level for application")
 
@@ -34,7 +34,7 @@ func main() {
 	logger := logging.NewLogger(*logLevel)
 	defer logger.Sync()
 
-	day2Solver, err := day_02.NewDay2Solver(logger, *validator)
+	day2Solver, err := day02.NewDay2Solver(logger, *validator)
 
 	if err != nil {
 		logger.Fatal("failed to instantiate day 2 problem solver", zap.Error(err))

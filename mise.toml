@@ -9,6 +9,6 @@ run = ["go mod tidy"]
 description = "build binaries"
 run = [
     "mkdir -p bin",
-    "go build -o ./bin/day_01 ./cmd/day_01/main.go",
-    "go build -o ./bin/day_02 ./cmd/day_02/main.go",
+    "go build -o ./bin/day01 ./cmd/day01/main.go",
+    "go build -o ./bin/day02 ./cmd/day02/main.go",
 ]

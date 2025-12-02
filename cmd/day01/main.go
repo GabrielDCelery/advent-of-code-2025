@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/GabrielDCelery/advent-of-code-2025/internals/day_01"
+	"github.com/GabrielDCelery/advent-of-code-2025/internals/day01"
 	"github.com/GabrielDCelery/advent-of-code-2025/internals/logging"
 )
 
@@ -31,7 +31,7 @@ func main() {
 	logger := logging.NewLogger(*logLevel)
 	defer logger.Sync()
 
-	dial, err := day_01.NewDial(*passwordMethod, logger)
+	dial, err := day01.NewDial(*passwordMethod, logger)
 
 	if err != nil {
 		log.Fatalf("failed to instantiate dial %v", err)
