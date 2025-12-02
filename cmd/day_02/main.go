@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"time"
 
 	"github.com/GabrielDCelery/advent-of-code-2025/internals/day_02"
 	"github.com/GabrielDCelery/advent-of-code-2025/internals/logging"
@@ -12,30 +13,19 @@ import (
 )
 
 func main() {
-	validator, ok := os.LookupEnv("VALIDATOR")
-
-	if !ok {
-		validator = day_02.ProductIDHasExactRepeat
-	}
-
 	logLevel, ok := os.LookupEnv("LOGLEVEL")
 
 	if !ok {
 		logLevel = "info"
 	}
 
-	filePath := flag.String("file", "", "input file path")
-
-	passwordMethod := flag.String("method", "end", "password method")
+	validator := flag.String("validator", day_02.ProductIDHasExactRepeat, "validation method (exactrepeat or anyrepeat)")
+	filePath := flag.String("file", "", "path to the input file containing product ID ranges")
 
 	flag.Parse()
 
 	if *filePath == "" {
 		log.Fatalf("missing param 'file', received %s", *filePath)
-	}
-
-	if *passwordMethod == "" {
-		log.Fatalf("missing param 'method', received %s", *passwordMethod)
 	}
 
 	file, err := os.Open(*filePath)
@@ -49,13 +39,16 @@ func main() {
 	logger := logging.NewLogger(logLevel)
 	defer logger.Sync()
 
-	day2Solver, err := day_02.NewDay2Solver(logger, validator)
+	day2Solver, err := day_02.NewDay2Solver(logger, *validator)
 
 	if err != nil {
 		logger.Fatal("failed to instantiate day 2 problem solver", zap.Error(err))
 	}
 
-	solution, err := day2Solver.Solve(context.Background(), file)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	solution, err := day2Solver.Solve(ctx, file)
 
 	if err != nil {
 		logger.Fatal("failed to run day 2 problem solver", zap.Error(err))
