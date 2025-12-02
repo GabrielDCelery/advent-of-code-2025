@@ -1,6 +1,7 @@
 package day_02
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -15,10 +16,14 @@ func TestDay2Solver(t *testing.T) {
 		//given
 		logger := zaptest.NewLogger(t, zaptest.Level(zapcore.DebugLevel))
 		defer logger.Sync()
+
 		day2Solver := NewDay2Solver(logger)
 
+		ctx := context.Background()
+		reader := strings.NewReader("11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124")
+
 		//when
-		result, err := day2Solver.Solve(strings.NewReader("11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124"))
+		result, err := day2Solver.Solve(ctx, reader)
 
 		//then
 		assert.NoError(t, err)

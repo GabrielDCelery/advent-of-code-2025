@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"os"
@@ -44,7 +45,7 @@ func main() {
 	))
 	defer logger.Sync()
 	day2Solver := day_02.NewDay2Solver(logger)
-	solution, err := day2Solver.Solve(file)
+	solution, err := day2Solver.Solve(context.Background(), file)
 	if err != nil {
 		logger.Fatal("failed to run day 2 problem solver", zap.Error(err))
 	}

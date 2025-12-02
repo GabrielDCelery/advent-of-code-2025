@@ -26,7 +26,30 @@ func NewDay2Solver(logger *zap.Logger) *Day2Solver {
 	return day2Solver
 }
 
-func (d *Day2Solver) Solve(reader io.Reader) (int, error) {
+func (d *Day2Solver) Solve(ctx context.Context, reader io.Reader) (int, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	scanner := createProductIdInputScanner(reader)
+
+	invalidIDSum := 0
+
+	for scanner.Scan() {
+		productIDRange := scanner.Text()
+		min, max, err := convertProductIDRangeToMinMax(productIDRange)
+		if err != nil {
+			return 0, err
+		}
+		invalidIDsChan := getInvalidIDs(ctx, min, max)
+		for invalidID := range invalidIDsChan {
+			invalidIDSum += invalidID
+		}
+	}
+
+	return invalidIDSum, nil
+}
+
+func createProductIdInputScanner(reader io.Reader) *bufio.Scanner {
 	scanner := bufio.NewScanner(reader)
 
 	scanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
@@ -42,27 +65,20 @@ func (d *Day2Solver) Solve(reader io.Reader) (int, error) {
 		return 0, nil, nil
 	})
 
-	invalidIDSum := 0
+	return scanner
+}
 
-	for scanner.Scan() {
-		item := scanner.Text()
-		d.logger.Debug("reading line", zap.String("item", item))
-		ids := strings.Split(item, "-")
-		min, err := strconv.Atoi(ids[0])
-		if err != nil {
-			return 0, err
-		}
-		max, err := strconv.Atoi(ids[1])
-		if err != nil {
-			return 0, err
-		}
-		invalidIDsChan := getInvalidIDs(context.Background(), min, max)
-		for invalidID := range invalidIDsChan {
-			invalidIDSum += invalidID
-		}
-
+func convertProductIDRangeToMinMax(productIdRange string) (int, int, error) {
+	ids := strings.Split(productIdRange, "-")
+	min, err := strconv.Atoi(ids[0])
+	if err != nil {
+		return 0, 0, err
 	}
-	return invalidIDSum, nil
+	max, err := strconv.Atoi(ids[1])
+	if err != nil {
+		return 0, 0, err
+	}
+	return min, max, nil
 }
 
 func getInvalidIDs(ctx context.Context, min int, max int) <-chan int {
@@ -82,7 +98,6 @@ func getInvalidIDs(ctx context.Context, min int, max int) <-chan int {
 				}
 			}
 		}
-
 	}()
 	return out
 }
