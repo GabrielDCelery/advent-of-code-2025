@@ -13,11 +13,9 @@ import (
 	"go.uber.org/zap"
 )
 
-type ProductIDInvalidSumOpt string
-
 const (
-	SomeSequenceRepeatedTwice        ProductIDInvalidSumOpt = "SOME_SEQUENCE_REPEATED_TWICE"
-	SomeSequenceRepeatedAtleastTwice ProductIDInvalidSumOpt = "SOME_SEQUENCE_REPEATED_ATLEAST_TWICE"
+	SomeSequenceRepeatedTwice        string = "repeated"
+	SomeSequenceRepeatedAtleastTwice string = "repeatedatleasttwice"
 )
 
 type Day2Solver struct {
@@ -25,7 +23,7 @@ type Day2Solver struct {
 	getInvalidProductIdSumFunc getInvalidProductIdSumFunc
 }
 
-func NewDay2Solver(logger *zap.Logger, productIdInvalidSumOpt ProductIDInvalidSumOpt) (*Day2Solver, error) {
+func NewDay2Solver(logger *zap.Logger, productIdInvalidSumOpt string) (*Day2Solver, error) {
 	if logger == nil {
 		logger = zap.NewExample()
 	}
@@ -35,9 +33,9 @@ func NewDay2Solver(logger *zap.Logger, productIdInvalidSumOpt ProductIDInvalidSu
 	}
 	switch productIdInvalidSumOpt {
 	case SomeSequenceRepeatedTwice:
-		day2Solver.getInvalidProductIdSumFunc = getInvalidProductIdSumWhenSequenceIsRepeatedTwice
+		day2Solver.getInvalidProductIdSumFunc = getInvalidProductIDSumWhenSequenceIsRepeatedTwice
 	case SomeSequenceRepeatedAtleastTwice:
-		return nil, fmt.Errorf("unhandled option %s", productIdInvalidSumOpt)
+		day2Solver.getInvalidProductIdSumFunc = getInvalidProductIDSumWhenSequenceIsRepeatedAtleastTwice
 	default:
 		return nil, fmt.Errorf("unhandled option %s", productIdInvalidSumOpt)
 	}
@@ -98,7 +96,7 @@ func convertProductIDRangeToMinMax(productIDRange string) (int, int, error) {
 
 type getInvalidProductIdSumFunc func(ctx context.Context, productIDRange string) (int, error)
 
-func getInvalidProductIdSumWhenSequenceIsRepeatedTwice(ctx context.Context, productIDRange string) (int, error) {
+func getInvalidProductIDSumWhenSequenceIsRepeatedTwice(ctx context.Context, productIDRange string) (int, error) {
 	min, max, err := convertProductIDRangeToMinMax(productIDRange)
 	if err != nil {
 		return 0, err
@@ -107,15 +105,60 @@ func getInvalidProductIdSumWhenSequenceIsRepeatedTwice(ctx context.Context, prod
 	for i := min; i <= max; i++ {
 		select {
 		case <-ctx.Done():
+			return 0, nil
 		default:
 			id := strconv.Itoa(i)
 			if math.Remainder(float64(len(id)), 2) != 0 {
 				continue
 			}
-			if id[:(len(id)/2)] == id[(len(id)/2):] {
+			if !isValidID(id, (len(id) / 2)) {
 				sum += i
 			}
 		}
 	}
 	return sum, nil
+}
+
+func getInvalidProductIDSumWhenSequenceIsRepeatedAtleastTwice(ctx context.Context, productIDRange string) (int, error) {
+	min, max, err := convertProductIDRangeToMinMax(productIDRange)
+	if err != nil {
+		return 0, err
+	}
+	sum := 0
+	for i := min; i <= max; i++ {
+		select {
+		case <-ctx.Done():
+			return 0, nil
+		default:
+			id := strconv.Itoa(i)
+			if !isValidID(id, 1) {
+				sum += i
+			}
+		}
+	}
+	return sum, nil
+}
+
+func isValidID(id string, sequenceLenStart int) bool {
+	for i := sequenceLenStart; i <= (len(id) / 2); i++ {
+		if isSequenceRepeating(id, i) {
+			return false
+		}
+	}
+	return true
+}
+
+func isSequenceRepeating(data string, sequenceLen int) bool {
+	if sequenceLen > (len(data) / 2) {
+		return false
+	}
+	if math.Remainder(float64(len(data)), float64(sequenceLen)) != 0 {
+		return false
+	}
+	for i := 0; i < (len(data) / sequenceLen); i++ {
+		if data[0:sequenceLen] != data[i*sequenceLen:((i+1)*sequenceLen)] {
+			return false
+		}
+	}
+	return true
 }

@@ -12,6 +12,10 @@ import (
 )
 
 func main() {
+	validatorOpt, ok := os.LookupEnv("VALIDATOROPT")
+	if !ok {
+		validatorOpt = day_02.SomeSequenceRepeatedTwice
+	}
 	logLevel, ok := os.LookupEnv("LOGLEVEL")
 	if !ok {
 		logLevel = "info"
@@ -44,7 +48,7 @@ func main() {
 		atom,
 	))
 	defer logger.Sync()
-	day2Solver, err := day_02.NewDay2Solver(logger, day_02.SomeSequenceRepeatedTwice)
+	day2Solver, err := day_02.NewDay2Solver(logger, validatorOpt)
 	if err != nil {
 		logger.Fatal("failed to instantiate day 2 problem solver", zap.Error(err))
 	}
