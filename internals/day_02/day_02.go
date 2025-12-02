@@ -24,7 +24,7 @@ type Day2Solver struct {
 
 func NewDay2Solver(logger *zap.Logger, productValidator string) (*Day2Solver, error) {
 	if logger == nil {
-		logger = zap.NewExample()
+		logger = zap.NewNop()
 	}
 	day2Solver := &Day2Solver{
 		logger:             logger,
