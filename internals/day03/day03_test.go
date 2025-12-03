@@ -13,17 +13,22 @@ import (
 
 func TestDay3Solver_getLargestPossibleJoltage(t *testing.T) {
 	testCases := []struct {
-		poweBank string
-		expected int
+		poweBank     string
+		batteryCount int
+		expected     int
 	}{
-		{poweBank: "987654321111111", expected: 98},
-		{poweBank: "811111111111119", expected: 89},
-		{poweBank: "234234234234278", expected: 78},
-		{poweBank: "818181911112111", expected: 92},
+		{poweBank: "987654321111111", batteryCount: 2, expected: 98},
+		{poweBank: "811111111111119", batteryCount: 2, expected: 89},
+		{poweBank: "234234234234278", batteryCount: 2, expected: 78},
+		{poweBank: "818181911112111", batteryCount: 2, expected: 92},
+		{poweBank: "987654321111111", batteryCount: 12, expected: 987654321111},
+		{poweBank: "811111111111119", batteryCount: 12, expected: 811111111119},
+		{poweBank: "234234234234278", batteryCount: 12, expected: 434234234278},
+		{poweBank: "818181911112111", batteryCount: 12, expected: 888911112111},
 	}
 
 	for _, tt := range testCases {
-		t.Run(fmt.Sprintf("Correctly extracts possible joltage %d from power bank %s", tt.expected, tt.poweBank), func(t *testing.T) {
+		t.Run(fmt.Sprintf("Correctly extracts possible joltage %d from power bank %s with battery count %d", tt.expected, tt.poweBank, tt.batteryCount), func(t *testing.T) {
 			t.Parallel()
 			//given
 			logger := zaptest.NewLogger(t, zaptest.Level(zapcore.DebugLevel))
@@ -32,7 +37,7 @@ func TestDay3Solver_getLargestPossibleJoltage(t *testing.T) {
 			day3Solver, _ := NewDay3Solver(logger)
 
 			//when
-			result, err := day3Solver.getLargesPossibleJoltage(tt.poweBank)
+			result, err := day3Solver.getLargesPossibleJoltage(tt.poweBank, tt.batteryCount)
 
 			//then
 			assert.NoError(t, err)
