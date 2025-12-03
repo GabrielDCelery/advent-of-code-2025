@@ -9,15 +9,17 @@ import (
 )
 
 type Day3Solver struct {
-	logger *zap.Logger
+	logger       *zap.Logger
+	batteryCount int
 }
 
-func NewDay3Solver(logger *zap.Logger) (*Day3Solver, error) {
+func NewDay3Solver(batteryCount int, logger *zap.Logger) (*Day3Solver, error) {
 	if logger == nil {
 		logger = zap.NewNop()
 	}
 	day3Solver := &Day3Solver{
-		logger,
+		batteryCount: batteryCount,
+		logger:       logger,
 	}
 	return day3Solver, nil
 }
@@ -27,7 +29,7 @@ func (d *Day3Solver) Solve(ctx context.Context, reader io.Reader) (int, error) {
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		line := scanner.Text()
-		largestPossibleJoltage, err := d.getLargesPossibleJoltage(line, 2)
+		largestPossibleJoltage, err := d.getLargesPossibleJoltage(line, d.batteryCount)
 		if err != nil {
 			return 0, err
 		}

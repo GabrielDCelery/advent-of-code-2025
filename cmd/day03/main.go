@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/GabrielDCelery/advent-of-code-2025/internals/day03"
@@ -13,6 +14,7 @@ import (
 )
 
 func main() {
+	batteryCountStr := flag.String("batteryCount", "2", "the number of batteries in a power bank we want to calculate the joltage for")
 	filePath := flag.String("file", "", "path to the input file containing product ID ranges")
 	logLevel := flag.String("logLevel", "info", "log level for application")
 
@@ -20,6 +22,12 @@ func main() {
 
 	if *filePath == "" {
 		log.Fatalf("missing required flag: -file")
+	}
+
+	batteryCount, err := strconv.Atoi(*batteryCountStr)
+
+	if err != nil {
+		log.Fatalf("battery count has to be valid integer, but got %s", *batteryCountStr)
 	}
 
 	file, err := os.Open(*filePath)
@@ -33,7 +41,7 @@ func main() {
 	logger := logging.NewLogger(*logLevel)
 	defer logger.Sync()
 
-	day3Solver, err := day03.NewDay3Solver(logger)
+	day3Solver, err := day03.NewDay3Solver(batteryCount, logger)
 
 	if err != nil {
 		logger.Fatal("failed to instantiate day 3 problem solver", zap.Error(err))
