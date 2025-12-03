@@ -3,6 +3,7 @@ package day03
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"io"
 
 	"go.uber.org/zap"
@@ -42,54 +43,33 @@ func (d *Day3Solver) Solve(ctx context.Context, reader io.Reader) (int, error) {
 	return solution, nil
 }
 
+// NOTE: Time complexity O(n * k)
+// space complexiy is O(1)
 func (d *Day3Solver) getLargesPossibleJoltage(powerBank string, batteryCount int) (int, error) {
-	powerBankValueMap := make(map[int][]int)
-
-	for i, powerBankCellAsRune := range powerBank {
-		powerBankCell := int(powerBankCellAsRune - '0')
-		val, ok := powerBankValueMap[powerBankCell]
-		if !ok {
-			val = make([]int, 0)
-		}
-		val = append(val, i)
-		powerBankValueMap[powerBankCell] = val
-	}
-
-	batteries := make([]int, batteryCount)
-
-	for batteryIdx := range batteries {
-	CheckLargest:
-		for i := 9; i > 0; i-- {
-			powerBankValueIndexes, ok := powerBankValueMap[i]
-			// if the value does not exist in the power bank skip it
-			if !ok {
-				continue CheckLargest
-			}
-			for _, powerBankValueIndex := range powerBankValueIndexes {
-				spaceRequired := batteryCount - batteryIdx
-				spaceAvailable := len(powerBank) - powerBankValueIndex
-				// if there is not enough space for the reamining batteries we can't use this value
-				if spaceRequired > spaceAvailable {
-					continue CheckLargest
-				}
-				// if the position we want to pick comes before the position we already picked then it is invalid
-				if batteryIdx > 0 && batteries[batteryIdx-1] >= powerBankValueIndex {
-					continue
-				}
-				batteries[batteryIdx] = powerBankValueIndex
-				break CheckLargest
-			}
-		}
+	if batteryCount > len(powerBank) {
+		return 0, fmt.Errorf("battery count %d is greater than the size of power bank %d", batteryCount, len(powerBank))
 	}
 
 	sum := 0
-	decimal := 1
+	lastPickedPos := -1
 
-	for i := len(batteries) - 1; i >= 0; i-- {
-		powerBankValueIdx := batteries[i]
-		powerBankValue := int(powerBank[powerBankValueIdx] - '0')
-		sum += decimal * powerBankValue
-		decimal = 10 * decimal
+	for batteryIdx := range batteryCount {
+		minPos := lastPickedPos + 1
+		maxPos := len(powerBank) - batteryCount + batteryIdx
+
+		bestDigit := -1
+		bestPos := -1
+
+		for pos := minPos; pos <= maxPos; pos++ {
+			digit := int(powerBank[pos] - '0')
+			if digit > bestDigit {
+				bestDigit = digit
+				bestPos = pos
+			}
+		}
+
+		sum = sum*10 + bestDigit
+		lastPickedPos = bestPos
 	}
 
 	return sum, nil
