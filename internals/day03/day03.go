@@ -43,7 +43,7 @@ func (d *Day3Solver) Solve(ctx context.Context, reader io.Reader) (int, error) {
 	return solution, nil
 }
 
-// NOTE: Time complexity O(n * k)
+// NOTE: Time complexity O(n * k) time complexity solution
 // space complexiy is O(1)
 func (d *Day3Solver) getLargesPossibleJoltage(powerBank string, batteryCount int) (int, error) {
 	if batteryCount > len(powerBank) {
