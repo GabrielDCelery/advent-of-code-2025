@@ -12,4 +12,5 @@ run = [
     "go build -o ./bin/day01 ./cmd/day01/main.go",
     "go build -o ./bin/day02 ./cmd/day02/main.go",
     "go build -o ./bin/day03 ./cmd/day03/main.go",
+    "go build -o ./bin/day04 ./cmd/day04/main.go",
 ]
