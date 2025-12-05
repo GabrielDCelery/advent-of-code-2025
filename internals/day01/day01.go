@@ -19,21 +19,21 @@ const (
 	passwordMethodClick = 0x434C49434B
 )
 
-type Dial struct {
+type Day1Solver struct {
 	logger         *zap.Logger
 	ring           *ring.Ring
 	password       int
 	passwordMethod int
 }
 
-func NewDial(passwordMethod string, logger *zap.Logger) (*Dial, error) {
+func NewDay1Solver(passwordMethod string, logger *zap.Logger) (*Day1Solver, error) {
 	ringSize := defaultRingSize
 	ringPosition := defaultRingPosition
 	if logger == nil {
 		logger = zap.NewNop()
 	}
 	logger = logger.With(zap.String("passwordMethod", passwordMethod))
-	dial := &Dial{
+	dial := &Day1Solver{
 		logger:         logger,
 		ring:           ring.New(ringSize),
 		password:       0,
@@ -55,7 +55,7 @@ func NewDial(passwordMethod string, logger *zap.Logger) (*Dial, error) {
 	return dial, nil
 }
 
-func (d *Dial) GetPassword(reader io.Reader) (int, error) {
+func (d *Day1Solver) Solve(reader io.Reader) (int, error) {
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -64,11 +64,11 @@ func (d *Dial) GetPassword(reader io.Reader) (int, error) {
 			return 0, err
 		}
 	}
-	d.logger.Info("password retrieved", zap.Int("password", d.password))
+	d.logger.Debug("password retrieved", zap.Int("password", d.password))
 	return d.password, nil
 }
 
-func (d *Dial) turnDialUsingInstruction(line string) error {
+func (d *Day1Solver) turnDialUsingInstruction(line string) error {
 	if len(line) == 0 {
 		return fmt.Errorf("instruction can not be empty")
 	}

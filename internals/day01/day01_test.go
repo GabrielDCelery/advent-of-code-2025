@@ -16,10 +16,10 @@ func TestDial(t *testing.T) {
 		logger := zaptest.NewLogger(t, zaptest.Level(zapcore.DebugLevel))
 		defer logger.Sync()
 		reader := strings.NewReader("L68\nL30\nR48\nL5\nR60\nL55\nL1\nL99\nR14\nL82")
-		dial, dialErr := NewDial("end", logger)
+		dial, dialErr := NewDay1Solver("end", logger)
 
 		// when
-		result, err := dial.GetPassword(reader)
+		result, err := dial.Solve(reader)
 
 		// then
 		assert.NoError(t, dialErr)
@@ -33,10 +33,10 @@ func TestDial(t *testing.T) {
 		logger := zaptest.NewLogger(t, zaptest.Level(zapcore.DebugLevel))
 		defer logger.Sync()
 		reader := strings.NewReader("L68\nL30\nR48\nL5\nR60\nL55\nL1\nL99\nR14\nL82")
-		dial, dialErr := NewDial("click", logger)
+		dial, dialErr := NewDay1Solver("click", logger)
 
 		// when
-		result, err := dial.GetPassword(reader)
+		result, err := dial.Solve(reader)
 
 		// then
 		assert.NoError(t, dialErr)

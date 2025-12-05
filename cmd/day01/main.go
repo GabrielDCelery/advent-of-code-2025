@@ -7,6 +7,7 @@ import (
 
 	"github.com/GabrielDCelery/advent-of-code-2025/internals/day01"
 	"github.com/GabrielDCelery/advent-of-code-2025/internals/logging"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -31,15 +32,17 @@ func main() {
 	logger := logging.NewLogger(*logLevel)
 	defer logger.Sync()
 
-	dial, err := day01.NewDial(*passwordMethod, logger)
+	solver, err := day01.NewDay1Solver(*passwordMethod, logger)
 
 	if err != nil {
-		log.Fatalf("failed to instantiate dial %v", err)
+		log.Fatalf("failed to instantiate day 1 puzzle solver %v", err)
 	}
 
-	_, err = dial.GetPassword(file)
+	solution, err := solver.Solve(file)
 
 	if err != nil {
 		log.Fatalf("failed to get password: %v", err)
 	}
+
+	logger.Info("solved day 1 puzzle", zap.Int("password", solution))
 }
