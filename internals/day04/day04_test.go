@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap/zaptest"
 )
 
-func TestDay3Solver_getLargestPossibleJoltage(t *testing.T) {
+func TestDay4Solver_getLargestPossibleJoltage(t *testing.T) {
 	t.Run("Correctly calculates the number of rolls where there are fewer than four rolls of paper in the eight adjacent positions", func(t *testing.T) {
 		t.Parallel()
 		//given
