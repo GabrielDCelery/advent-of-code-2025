@@ -33,7 +33,7 @@ func TestDay5Solver(t *testing.T) {
 
 		//then
 		assert.NoError(t, err)
-		assert.Equal(t, 3, result.NumOfFreshIngredients)
+		assert.Equal(t, 3, result.FreshIngredientsCount)
 	})
 
 	t.Run("Correctly calculates the number of available ingredients", func(t *testing.T) {
@@ -58,6 +58,6 @@ func TestDay5Solver(t *testing.T) {
 
 		//then
 		assert.NoError(t, err)
-		assert.Equal(t, 14, result.NumOfAvailableIngredients)
+		assert.Equal(t, 14, result.AvailableIngredientsCount)
 	})
 }

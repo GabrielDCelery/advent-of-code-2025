@@ -15,7 +15,7 @@ import (
 type ReadMode int
 
 const (
-	ReadigFreshRanges ReadMode = iota
+	ReadingRanges ReadMode = iota
 	ReadingIngredients
 )
 
@@ -31,23 +31,22 @@ func NewDay5Solver(logger *zap.Logger) (*Day5Solver, error) {
 }
 
 type Solution struct {
-	NumOfFreshIngredients     int
-	NumOfAvailableIngredients int
+	FreshIngredientsCount     int
+	AvailableIngredientsCount int
 }
 
 func (d *Day5Solver) Solve(ctx context.Context, reader io.Reader) (Solution, error) {
-	var readMode = ReadigFreshRanges
+	var readMode = ReadingRanges
 
 	scanner := bufio.NewScanner(reader)
 
 	ingredientRanges := IngredientRanges{}
 
 	solution := Solution{
-		NumOfFreshIngredients:     0,
-		NumOfAvailableIngredients: 0,
+		FreshIngredientsCount:     0, // count of ingredients with valid ranges
+		AvailableIngredientsCount: 0, // total count of all unique ingredients in all the ranges
 	}
 
-Scanner:
 	for scanner.Scan() {
 		line := scanner.Text()
 		if line == "" {
@@ -57,7 +56,7 @@ Scanner:
 			continue
 		}
 		switch readMode {
-		case ReadigFreshRanges:
+		case ReadingRanges:
 			boundaries := strings.Split(line, "-")
 			if len(boundaries) != 2 {
 				return Solution{}, fmt.Errorf("ingredient range '%s' should have min max boundaries", line)
@@ -77,17 +76,17 @@ Scanner:
 				return Solution{}, fmt.Errorf("ingredient '%s' should be a valid integer", line)
 			}
 			if ingredientRanges.isFreshIngredient(ingredient) {
-				solution.NumOfFreshIngredients += 1
-				continue Scanner
+				solution.FreshIngredientsCount += 1
 			}
 		}
 	}
 
-	solution.NumOfAvailableIngredients = ingredientRanges.countNumOfAvailableIngredients()
+	solution.AvailableIngredientsCount = ingredientRanges.countAvailableIngredients()
 
 	return solution, nil
 }
 
+// IngredientRange represents a closed interval [min,max] of ingredient ID
 type IngredientRange struct {
 	min int
 	max int
@@ -95,21 +94,22 @@ type IngredientRange struct {
 
 type IngredientRanges []IngredientRange
 
-func (f *IngredientRanges) addRange(rang IngredientRange) {
-	*f = append(*f, rang)
+func (ir *IngredientRanges) addRange(rang IngredientRange) {
+	*ir = append(*ir, rang)
 }
 
-func (f *IngredientRanges) merge() {
-	if len(*f) == 1 {
+func (ir *IngredientRanges) merge() {
+	if len(*ir) == 1 {
 		return
 	}
-	ranges := *f
+	ranges := *ir
 	sort.Slice(ranges, func(i int, j int) bool {
 		return ranges[i].min < ranges[j].min
 	})
 	merged := make(IngredientRanges, 0)
 	current := ranges[0]
-	for i := 1; i < len(*f); i++ {
+	for i := 1; i < len(*ir); i++ {
+		// merge overlapping ranges (e.g. [1-5] and [3-7] becomes [1-7])
 		if ranges[i].min <= current.max {
 			current.max = max(current.max, ranges[i].max)
 		} else {
@@ -118,11 +118,11 @@ func (f *IngredientRanges) merge() {
 		}
 	}
 	merged = append(merged, current)
-	*f = merged
+	*ir = merged
 }
 
-func (f *IngredientRanges) isFreshIngredient(ingredient int) bool {
-	for _, rang := range *f {
+func (ir *IngredientRanges) isFreshIngredient(ingredient int) bool {
+	for _, rang := range *ir {
 		if ingredient >= rang.min && ingredient <= rang.max {
 			return true
 		}
@@ -130,9 +130,9 @@ func (f *IngredientRanges) isFreshIngredient(ingredient int) bool {
 	return false
 }
 
-func (f *IngredientRanges) countNumOfAvailableIngredients() int {
+func (ir *IngredientRanges) countAvailableIngredients() int {
 	numOfAvailableIngredients := 0
-	for _, rang := range *f {
+	for _, rang := range *ir {
 		numOfAvailableIngredients += (rang.max - rang.min + 1)
 	}
 	return numOfAvailableIngredients
