@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -41,11 +42,47 @@ func (f *IngredientRanges) addRange(rang IngredientRange) {
 }
 
 func (f *IngredientRanges) merge() {
-	*f = *f
+	if len(*f) == 1 {
+		return
+	}
+	ranges := *f
+	sort.Slice(ranges, func(i int, j int) bool {
+		return ranges[i].min < ranges[j].min
+	})
+	merged := make(IngredientRanges, 0)
+	current := ranges[0]
+	for i := 1; i < len(*f); i++ {
+		if ranges[i].min <= current.max {
+			current.max = max(current.max, ranges[i].max)
+		} else {
+			merged = append(merged, current)
+			current = ranges[i]
+		}
+	}
+	merged = append(merged, current)
+	*f = merged
+}
+
+func (f *IngredientRanges) isFreshIngredient(ingredient int) bool {
+	for _, rang := range *f {
+		if ingredient >= rang.min && ingredient <= rang.max {
+			return true
+		}
+	}
+	return false
+}
+
+func (f *IngredientRanges) countNumOfAvailableIngredients() int {
+	numOfAvailableIngredients := 0
+	for _, rang := range *f {
+		numOfAvailableIngredients += (rang.max - rang.min + 1)
+	}
+	return numOfAvailableIngredients
 }
 
 type Solution struct {
-	NumOfFreshIngredients int
+	NumOfFreshIngredients     int
+	NumOfAvailableIngredients int
 }
 
 func (d *Day5Solver) Solve(ctx context.Context, reader io.Reader) (Solution, error) {
@@ -56,7 +93,8 @@ func (d *Day5Solver) Solve(ctx context.Context, reader io.Reader) (Solution, err
 	ingredientRanges := IngredientRanges{}
 
 	solution := Solution{
-		NumOfFreshIngredients: 0,
+		NumOfFreshIngredients:     0,
+		NumOfAvailableIngredients: 0,
 	}
 
 Outer:
@@ -65,6 +103,7 @@ Outer:
 		if line == "" {
 			readMode = ReadingIngredients
 			ingredientRanges.merge()
+			d.logger.Debug("merged ingredient ranges", zap.String("ranges", fmt.Sprintf("%+v", ingredientRanges)))
 			continue
 		}
 		switch readMode {
@@ -88,14 +127,14 @@ Outer:
 			if err != nil {
 				return Solution{}, fmt.Errorf("ingredient '%s' should be a valid integer", line)
 			}
-			for _, ingredientRange := range ingredientRanges {
-				if ingredient >= ingredientRange.min && ingredient <= ingredientRange.max {
-					solution.NumOfFreshIngredients += 1
-					continue Outer
-				}
+			if ingredientRanges.isFreshIngredient(ingredient) {
+				solution.NumOfFreshIngredients += 1
+				continue Outer
 			}
 		}
 	}
+
+	solution.NumOfAvailableIngredients = ingredientRanges.countNumOfAvailableIngredients()
 
 	return solution, nil
 }
