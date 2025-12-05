@@ -12,6 +12,13 @@ import (
 	"go.uber.org/zap"
 )
 
+type ReadMode int
+
+const (
+	ReadigFreshRanges ReadMode = iota
+	ReadingIngredients
+)
+
 type Day5Solver struct {
 	logger *zap.Logger
 }
@@ -80,13 +87,6 @@ Scanner:
 
 	return solution, nil
 }
-
-type ReadMode int
-
-const (
-	ReadigFreshRanges ReadMode = iota
-	ReadingIngredients
-)
 
 type IngredientRange struct {
 	min int
