@@ -66,14 +66,11 @@ type Grid struct {
 
 func (g *Grid) clone() *Grid {
 	cloned := Grid{
-		cells: make([][]Cell, 0),
+		cells: make([][]Cell, len(g.cells)),
 	}
-	for _, row := range g.cells {
-		clonedRow := []Cell{}
-		for _, cell := range row {
-			clonedRow = append(clonedRow, cell)
-		}
-		cloned.cells = append(cloned.cells, clonedRow)
+	for y, row := range g.cells {
+		cloned.cells[y] = make([]Cell, len(row))
+		copy(cloned.cells[y], row)
 	}
 	return &cloned
 }
