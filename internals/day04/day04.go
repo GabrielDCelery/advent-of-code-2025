@@ -9,6 +9,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const MinNeighborsForInaccessible = 4
+
 type RemovalMode int
 
 const (
@@ -87,34 +89,46 @@ type Coordinate struct {
 	y int
 }
 
+func (c Coordinate) isInsideGrid(grid *Grid) bool {
+	return c.x >= 0 && c.x < len(grid.cells[0]) && c.y >= 0 && c.y < len(grid.cells)
+}
+
+func (c Coordinate) getNeighbours() []Coordinate {
+	neighbours := make([]Coordinate, 0)
+	for y := -1; y <= 1; y++ {
+		for x := -1; x <= 1; x++ {
+			isTheCellItself := x == 0 && y == 0
+			if isTheCellItself {
+				continue
+			}
+			neighbour := Coordinate{x: c.x + x, y: c.y + y}
+			neighbours = append(neighbours, neighbour)
+		}
+	}
+	return neighbours
+}
+
 func getRollsReachableViaForklift(grid *Grid) []Coordinate {
 	coordinates := make([]Coordinate, 0)
 	for cellY, row := range grid.cells {
 		for cellX := range row {
-			if grid.cells[cellY][cellX] != Roll {
+			cell := Coordinate{x: cellX, y: cellY}
+			if grid.cells[cell.y][cell.x] != Roll {
 				continue
 			}
-			neighbouring := 0
-			for y := -1; y <= 1; y++ {
-				for x := -1; x <= 1; x++ {
-					isTheCellItself := x == 0 && y == 0
-					if isTheCellItself {
-						continue
-					}
-					neighbourX := cellX + x
-					neighbourY := cellY + y
-					isInsideGrid := neighbourX >= 0 && neighbourX < len(grid.cells[cellY]) && neighbourY >= 0 && neighbourY < len(grid.cells)
-					if !isInsideGrid {
-						continue
-					}
-					neighBourCell := grid.cells[neighbourY][neighbourX]
-					if neighBourCell == Roll {
-						neighbouring += 1
-					}
+			rollsNextToCell := 0
+			neighbours := cell.getNeighbours()
+			for _, neighbour := range neighbours {
+				if !neighbour.isInsideGrid(grid) {
+					continue
 				}
+				if grid.cells[neighbour.y][neighbour.x] != Roll {
+					continue
+				}
+				rollsNextToCell += 1
 			}
-			if neighbouring < 4 {
-				coordinates = append(coordinates, Coordinate{x: cellX, y: cellY})
+			if rollsNextToCell < MinNeighborsForInaccessible {
+				coordinates = append(coordinates, cell)
 			}
 		}
 	}
