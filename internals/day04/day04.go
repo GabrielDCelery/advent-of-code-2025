@@ -9,6 +9,11 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	RemoveRolls     = true
+	DontRemoveRolls = false
+)
+
 type Day4Solver struct {
 	logger *zap.Logger
 }
@@ -20,8 +25,8 @@ func NewDay4Solver(logger *zap.Logger) (*Day4Solver, error) {
 	return solver, nil
 }
 
-func (d *Day4Solver) Solve(ctx context.Context, reader io.Reader) (int, error) {
-	grid := Grid{
+func (d *Day4Solver) Solve(ctx context.Context, reader io.Reader, shouldRemoveRolls bool) (int, error) {
+	grid := &Grid{
 		cells: make([][]Cell, 0),
 	}
 	scanner := bufio.NewScanner(reader)
@@ -39,8 +44,44 @@ func (d *Day4Solver) Solve(ctx context.Context, reader io.Reader) (int, error) {
 		grid.cells = append(grid.cells, row)
 	}
 
-	sum := 0
+	numOfRemovableRools := calculateNumOfRemovableRolls(grid, shouldRemoveRolls, 0)
 
+	return numOfRemovableRools, nil
+}
+
+type Cell bool
+
+type Grid struct {
+	cells [][]Cell
+}
+
+func (g *Grid) clone() *Grid {
+	cloned := Grid{
+		cells: make([][]Cell, 0),
+	}
+	for _, row := range g.cells {
+		clonedRow := []Cell{}
+		for _, cell := range row {
+			clonedRow = append(clonedRow, cell)
+		}
+		cloned.cells = append(cloned.cells, clonedRow)
+	}
+	return &cloned
+}
+
+func (g *Grid) removeRolls(coordinates []Coordinate) {
+	for _, coordinate := range coordinates {
+		g.cells[coordinate.y][coordinate.x] = Cell(false)
+	}
+}
+
+type Coordinate struct {
+	x int
+	y int
+}
+
+func getRollsReachableViaForklift(grid *Grid) []Coordinate {
+	coordinates := make([]Coordinate, 0)
 	for cellY, row := range grid.cells {
 		for cellX := range row {
 			if grid.cells[cellY][cellX] != true {
@@ -66,16 +107,24 @@ func (d *Day4Solver) Solve(ctx context.Context, reader io.Reader) (int, error) {
 				}
 			}
 			if neighbouring < 4 {
-				sum += 1
+				coordinates = append(coordinates, Coordinate{x: cellX, y: cellY})
 			}
-
 		}
 	}
-	return sum, nil
+	return coordinates
 }
 
-type Cell bool
-
-type Grid struct {
-	cells [][]Cell
+func calculateNumOfRemovableRolls(grid *Grid, shouldRemoveRolls bool, sum int) int {
+	rollsReachableViaForklift := getRollsReachableViaForklift(grid)
+	numOfRollsReachableViaForklift := len(rollsReachableViaForklift)
+	if numOfRollsReachableViaForklift == 0 {
+		return sum
+	}
+	sum = sum + numOfRollsReachableViaForklift
+	if shouldRemoveRolls == false {
+		return sum
+	}
+	cloned := grid.clone()
+	cloned.removeRolls(rollsReachableViaForklift)
+	return calculateNumOfRemovableRolls(cloned, shouldRemoveRolls, sum)
 }

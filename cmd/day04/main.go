@@ -13,10 +13,21 @@ import (
 )
 
 func main() {
+	removeRolls := flag.String("removeRolls", "n", "whether to remove rolls or not after we reach them (y or n)")
 	filePath := flag.String("file", "", "path to the input file containing product ID ranges")
 	logLevel := flag.String("logLevel", "info", "log level for application")
 
 	flag.Parse()
+
+	var shouldRemoveRolls bool
+	switch *removeRolls {
+	case "y":
+		shouldRemoveRolls = day04.RemoveRolls
+	case "n":
+		shouldRemoveRolls = day04.DontRemoveRolls
+	default:
+		log.Fatalf("incorrect flag of '%s' for removeRolls, valid values are 'y' or 'n'", *removeRolls)
+	}
 
 	if *filePath == "" {
 		log.Fatalf("missing required flag: -file")
@@ -42,7 +53,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	solution, err := day3Solver.Solve(ctx, file)
+	solution, err := day3Solver.Solve(ctx, file, shouldRemoveRolls)
 
 	if err != nil {
 		logger.Fatal("failed to run day 4 problem solver", zap.Error(err))
