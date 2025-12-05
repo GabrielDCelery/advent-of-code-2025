@@ -31,7 +31,7 @@ func TestDay3Solver_getLargestPossibleJoltage(t *testing.T) {
 .@@@@@@@@.
 @.@.@@@.@.`
 
-		result, err := day3Solver.Solve(context.Background(), strings.NewReader(input), DontRemoveRolls)
+		result, err := day3Solver.Solve(context.Background(), strings.NewReader(input), RemovalModeSingleLayer)
 
 		//then
 		assert.NoError(t, err)
@@ -58,7 +58,7 @@ func TestDay3Solver_getLargestPossibleJoltage(t *testing.T) {
 .@@@@@@@@.
 @.@.@@@.@.`
 
-		result, err := day3Solver.Solve(context.Background(), strings.NewReader(input), RemoveRolls)
+		result, err := day3Solver.Solve(context.Background(), strings.NewReader(input), RemovalModeRecursive)
 
 		//then
 		assert.NoError(t, err)

@@ -13,20 +13,20 @@ import (
 )
 
 func main() {
-	removeRolls := flag.String("removeRolls", "n", "whether to remove rolls or not after we reach them (y or n)")
+	removalModeFlag := flag.String("removalMode", "single", "removal mode of rolls after we reach them (single or recursive)")
 	filePath := flag.String("file", "", "path to the input file containing product ID ranges")
 	logLevel := flag.String("logLevel", "info", "log level for application")
 
 	flag.Parse()
 
-	var shouldRemoveRolls bool
-	switch *removeRolls {
-	case "y":
-		shouldRemoveRolls = day04.RemoveRolls
-	case "n":
-		shouldRemoveRolls = day04.DontRemoveRolls
+	var removalMode day04.RemovalMode
+	switch *removalModeFlag {
+	case "single":
+		removalMode = day04.RemovalModeSingleLayer
+	case "recursive":
+		removalMode = day04.RemovalModeRecursive
 	default:
-		log.Fatalf("incorrect flag of '%s' for removeRolls, valid values are 'y' or 'n'", *removeRolls)
+		log.Fatalf("incorrect flag of '%s' for removal mode, valid values are 'single' or 'recursive'", *removalModeFlag)
 	}
 
 	if *filePath == "" {
@@ -53,7 +53,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	solution, err := day3Solver.Solve(ctx, file, shouldRemoveRolls)
+	solution, err := day3Solver.Solve(ctx, file, removalMode)
 
 	if err != nil {
 		logger.Fatal("failed to run day 4 problem solver", zap.Error(err))

@@ -9,9 +9,11 @@ import (
 	"go.uber.org/zap"
 )
 
+type RemovalMode int
+
 const (
-	RemoveRolls     = true
-	DontRemoveRolls = false
+	RemovalModeSingleLayer RemovalMode = iota
+	RemovalModeRecursive
 )
 
 type Day4Solver struct {
@@ -25,7 +27,7 @@ func NewDay4Solver(logger *zap.Logger) (*Day4Solver, error) {
 	return solver, nil
 }
 
-func (d *Day4Solver) Solve(ctx context.Context, reader io.Reader, shouldRemoveRolls bool) (int, error) {
+func (d *Day4Solver) Solve(ctx context.Context, reader io.Reader, removalMode RemovalMode) (int, error) {
 	grid := &Grid{
 		cells: make([][]Cell, 0),
 	}
@@ -44,7 +46,7 @@ func (d *Day4Solver) Solve(ctx context.Context, reader io.Reader, shouldRemoveRo
 		grid.cells = append(grid.cells, row)
 	}
 
-	numOfRemovableRools := calculateNumOfRemovableRolls(grid, shouldRemoveRolls, 0)
+	numOfRemovableRools := calculateNumOfRemovableRolls(grid, removalMode, 0)
 
 	return numOfRemovableRools, nil
 }
@@ -114,17 +116,17 @@ func getRollsReachableViaForklift(grid *Grid) []Coordinate {
 	return coordinates
 }
 
-func calculateNumOfRemovableRolls(grid *Grid, shouldRemoveRolls bool, sum int) int {
+func calculateNumOfRemovableRolls(grid *Grid, removalMode RemovalMode, sum int) int {
 	rollsReachableViaForklift := getRollsReachableViaForklift(grid)
 	numOfRollsReachableViaForklift := len(rollsReachableViaForklift)
 	if numOfRollsReachableViaForklift == 0 {
 		return sum
 	}
 	sum = sum + numOfRollsReachableViaForklift
-	if shouldRemoveRolls == false {
+	if removalMode == RemovalModeSingleLayer {
 		return sum
 	}
 	cloned := grid.clone()
 	cloned.removeRolls(rollsReachableViaForklift)
-	return calculateNumOfRemovableRolls(cloned, shouldRemoveRolls, sum)
+	return calculateNumOfRemovableRolls(cloned, removalMode, sum)
 }
