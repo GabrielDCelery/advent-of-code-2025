@@ -33,6 +33,6 @@ func TestDay5Solver(t *testing.T) {
 
 		//then
 		assert.NoError(t, err)
-		assert.Equal(t, 3, result)
+		assert.Equal(t, 3, result.NumOfFreshIngredients)
 	})
 }

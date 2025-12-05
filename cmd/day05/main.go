@@ -48,5 +48,5 @@ func main() {
 		logger.Fatal("failed to run day 5 problem solver", zap.Error(err))
 	}
 
-	logger.Info("solved day 5 problem", zap.Int("solution", solution))
+	logger.Info("solved day 5 problem", zap.Int("numOfFreshIngredients", solution.NumOfFreshIngredients))
 }
