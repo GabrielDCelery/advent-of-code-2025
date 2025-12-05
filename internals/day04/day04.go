@@ -38,9 +38,9 @@ func (d *Day4Solver) Solve(ctx context.Context, reader io.Reader, removalMode Re
 		row := []Cell{}
 		for _, cell := range cells {
 			if cell == "@" {
-				row = append(row, Cell(true))
+				row = append(row, Roll)
 			} else {
-				row = append(row, Cell(false))
+				row = append(row, Empty)
 			}
 		}
 		grid.cells = append(grid.cells, row)
@@ -51,7 +51,12 @@ func (d *Day4Solver) Solve(ctx context.Context, reader io.Reader, removalMode Re
 	return numOfRemovableRools, nil
 }
 
-type Cell bool
+type Cell int
+
+const (
+	Empty Cell = iota
+	Roll
+)
 
 type Grid struct {
 	cells [][]Cell
@@ -73,7 +78,7 @@ func (g *Grid) clone() *Grid {
 
 func (g *Grid) removeRolls(coordinates []Coordinate) {
 	for _, coordinate := range coordinates {
-		g.cells[coordinate.y][coordinate.x] = Cell(false)
+		g.cells[coordinate.y][coordinate.x] = Empty
 	}
 }
 
@@ -86,7 +91,7 @@ func getRollsReachableViaForklift(grid *Grid) []Coordinate {
 	coordinates := make([]Coordinate, 0)
 	for cellY, row := range grid.cells {
 		for cellX := range row {
-			if grid.cells[cellY][cellX] != true {
+			if grid.cells[cellY][cellX] != Roll {
 				continue
 			}
 			neighbouring := 0
@@ -103,7 +108,7 @@ func getRollsReachableViaForklift(grid *Grid) []Coordinate {
 						continue
 					}
 					neighBourCell := grid.cells[neighbourY][neighbourX]
-					if neighBourCell == true {
+					if neighBourCell == Roll {
 						neighbouring += 1
 					}
 				}
