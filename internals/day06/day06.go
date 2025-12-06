@@ -127,38 +127,46 @@ func (p *Problem) getWidth() int {
 	return width
 }
 
+func (p *Problem) parseNumbersHorizontally() ([]int, error) {
+	nums := []int{}
+	for _, numAsStr := range p.numberRows {
+		numAsStr = strings.TrimSpace(numAsStr)
+		num, err := strconv.Atoi(numAsStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid integer '%s'", numAsStr)
+		}
+		nums = append(nums, num)
+	}
+	return nums, nil
+}
+
+func (p *Problem) parseNumbersVertically() ([]int, error) {
+	nums := []int{}
+	for i := 0; i < p.getWidth(); i++ {
+		var builder strings.Builder
+		for j := 0; j < len(p.numberRows); j++ {
+			char := p.numberRows[j][i]
+			if char == ' ' {
+				continue
+			}
+			builder.WriteByte(char)
+		}
+		numAsStr := builder.String()
+		num, err := strconv.Atoi(numAsStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid integer '%s'", numAsStr)
+		}
+		nums = append(nums, num)
+	}
+	return nums, nil
+}
+
 func (p *Problem) parseNumberRowsToNums(puzzleInterpreter PuzzleInterpreter) ([]int, error) {
 	switch puzzleInterpreter {
 	case HumanMath:
-		nums := []int{}
-		for _, numAsStr := range p.numberRows {
-			numAsStr = strings.TrimSpace(numAsStr)
-			num, err := strconv.Atoi(numAsStr)
-			if err != nil {
-				return nil, fmt.Errorf("invalid integer '%s'", numAsStr)
-			}
-			nums = append(nums, num)
-		}
-		return nums, nil
+		return p.parseNumbersHorizontally()
 	case CephalopodMath:
-		nums := []int{}
-		for i := 0; i < p.getWidth(); i++ {
-			var builder strings.Builder
-			for j := 0; j < len(p.numberRows); j++ {
-				char := p.numberRows[j][i]
-				if char == ' ' {
-					continue
-				}
-				builder.WriteByte(char)
-			}
-			numAsStr := builder.String()
-			num, err := strconv.Atoi(numAsStr)
-			if err != nil {
-				return nil, fmt.Errorf("invalid integer '%s'", numAsStr)
-			}
-			nums = append(nums, num)
-		}
-		return nums, nil
+		return p.parseNumbersVertically()
 	}
 	return nil, fmt.Errorf("invalid interpreter '%d'", puzzleInterpreter)
 }
