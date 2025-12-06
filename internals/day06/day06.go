@@ -33,14 +33,18 @@ func NewDay6Solver(logger *zap.Logger) (*Day6Solver, error) {
 }
 
 func (d *Day6Solver) Solve(ctx context.Context, reader io.Reader, puzzleInterpreter PuzzleInterpreter) (int, error) {
-	problemsContainer := NewProblemsContainer(puzzleInterpreter)
-	problemsContainer.parseInput(reader)
-	d.logger.Debug("parsed input to container", zap.String("container", fmt.Sprintf("%+v", problemsContainer)))
-	sum, err := problemsContainer.solve()
+	numberLines, operatorLine := readLines(reader)
+	d.logger.Debug("read input to operator line", zap.String("operatorLine", operatorLine))
+	d.logger.Debug("read input to number lines", zap.String("numberLines", fmt.Sprintf("%+v", numberLines)))
+	sections := parseOperators(operatorLine)
+	d.logger.Debug("split operator line to sections", zap.String("sections", fmt.Sprintf("%+v", sections)))
+	problems := createProblems(sections, numberLines)
+	d.logger.Debug("converted number lines to problems", zap.String("problems", fmt.Sprintf("%+v", problems)))
+	solution, err := solveProblems(problems, puzzleInterpreter)
 	if err != nil {
 		return 0, err
 	}
-	return sum, nil
+	return solution, nil
 }
 
 type Problem struct {
@@ -109,25 +113,7 @@ func (p *Problem) solve(puzzleInterpreter PuzzleInterpreter) (int, error) {
 	return 0, fmt.Errorf("invalid operator %s", p.operator)
 }
 
-type ProblemsContainer struct {
-	puzzleInterpreter PuzzleInterpreter
-	problems          []Problem
-}
-
-func NewProblemsContainer(puzzleInterpreter PuzzleInterpreter) *ProblemsContainer {
-	return &ProblemsContainer{
-		puzzleInterpreter: puzzleInterpreter,
-		problems:          []Problem{},
-	}
-}
-
-func (pc *ProblemsContainer) parseInput(reader io.Reader) {
-	numberLines, operatorLine := pc.readLines(reader)
-	sections := parseOperators(operatorLine)
-	pc.createProblems(sections, numberLines)
-}
-
-func (pc *ProblemsContainer) readLines(reader io.Reader) ([]string, string) {
+func readLines(reader io.Reader) ([]string, string) {
 	numLines := make([]string, 0)
 	operatorLine := ""
 
@@ -146,7 +132,8 @@ func (pc *ProblemsContainer) readLines(reader io.Reader) ([]string, string) {
 	return numLines, operatorLine
 }
 
-func (pc *ProblemsContainer) createProblems(sections []Section, numberLines []string) {
+func createProblems(sections []Section, numberLines []string) []Problem {
+	problems := []Problem{}
 	for i, section := range sections {
 		problem := Problem{
 			id:         i,
@@ -158,14 +145,15 @@ func (pc *ProblemsContainer) createProblems(sections []Section, numberLines []st
 		for _, numLine := range numberLines {
 			problem.numsMatrix = append(problem.numsMatrix, numLine[section.start:section.end])
 		}
-		pc.problems = append(pc.problems, problem)
+		problems = append(problems, problem)
 	}
+	return problems
 }
 
-func (pc *ProblemsContainer) solve() (int, error) {
+func solveProblems(problems []Problem, puzzleInterpreter PuzzleInterpreter) (int, error) {
 	sum := 0
-	for _, problem := range pc.problems {
-		result, err := problem.solve(pc.puzzleInterpreter)
+	for _, problem := range problems {
+		result, err := problem.solve(puzzleInterpreter)
 		if err != nil {
 			return 0, err
 		}
