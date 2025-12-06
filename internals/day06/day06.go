@@ -67,15 +67,15 @@ func (p *Problem) parseNumsMatrixToNums(puzzleInterpreter PuzzleInterpreter) ([]
 	case CephalopodMath:
 		nums := []int{}
 		for i := 0; i < (p.end - p.start); i++ {
-			numAsStr := ""
+			var builder strings.Builder
 			for j := 0; j < len(p.numsMatrix); j++ {
 				char := p.numsMatrix[j][i]
-				charAsStr := string(char)
-				if charAsStr == " " {
+				if char == ' ' {
 					continue
 				}
-				numAsStr = numAsStr + charAsStr
+				builder.WriteByte(char)
 			}
+			numAsStr := builder.String()
 			num, err := strconv.Atoi(numAsStr)
 			if err != nil {
 				return nil, fmt.Errorf("invalid integer '%s'", numAsStr)
