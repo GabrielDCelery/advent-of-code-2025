@@ -66,6 +66,18 @@ func readLines(reader io.Reader) ([]string, string) {
 	return numLines, operatorLine
 }
 
+func solveProblems(problems []Problem, puzzleInterpreter PuzzleInterpreter) (int, error) {
+	sum := 0
+	for _, problem := range problems {
+		result, err := problem.solve(puzzleInterpreter)
+		if err != nil {
+			return 0, err
+		}
+		sum += result
+	}
+	return sum, nil
+}
+
 type Section struct {
 	operator string
 	start    int
@@ -184,18 +196,6 @@ func (p *Problem) solve(puzzleInterpreter PuzzleInterpreter) (int, error) {
 	default:
 		return 0, fmt.Errorf("invalid operator %s", p.operator)
 	}
-}
-
-func solveProblems(problems []Problem, puzzleInterpreter PuzzleInterpreter) (int, error) {
-	sum := 0
-	for _, problem := range problems {
-		result, err := problem.solve(puzzleInterpreter)
-		if err != nil {
-			return 0, err
-		}
-		sum += result
-	}
-	return sum, nil
 }
 
 func multiplyAll(numbers []int) int {
