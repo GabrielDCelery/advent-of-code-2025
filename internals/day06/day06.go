@@ -11,6 +11,13 @@ import (
 	"go.uber.org/zap"
 )
 
+type PuzzleInterpreter int
+
+const (
+	HumanMath PuzzleInterpreter = iota
+	CephalopodMath
+)
+
 type Day6Solver struct {
 	logger *zap.Logger
 }
@@ -25,8 +32,8 @@ func NewDay6Solver(logger *zap.Logger) (*Day6Solver, error) {
 	return solver, nil
 }
 
-func (d *Day6Solver) Solve(ctx context.Context, reader io.Reader) (int, error) {
-	problemsContainer := NewProblemsContainer()
+func (d *Day6Solver) Solve(ctx context.Context, reader io.Reader, puzzleInterpreter PuzzleInterpreter) (int, error) {
+	problemsContainer := NewProblemsContainer(puzzleInterpreter)
 	problemsContainer.parseInput(reader)
 	d.logger.Debug("parsed input to container", zap.String("container", fmt.Sprintf("%+v", problemsContainer)))
 	sum, err := problemsContainer.solve()
@@ -80,12 +87,14 @@ func (p *Problem) solve() (int, error) {
 }
 
 type ProblemsContainer struct {
-	problems []Problem
+	puzzleInterpreter PuzzleInterpreter
+	problems          []Problem
 }
 
-func NewProblemsContainer() *ProblemsContainer {
+func NewProblemsContainer(puzzleInterpreter PuzzleInterpreter) *ProblemsContainer {
 	return &ProblemsContainer{
-		problems: []Problem{},
+		puzzleInterpreter: puzzleInterpreter,
+		problems:          []Problem{},
 	}
 }
 

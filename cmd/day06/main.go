@@ -13,10 +13,22 @@ import (
 )
 
 func main() {
+	interpreterAsStr := flag.String("interpreter", "human", "puzzle interpreter method (human vs cephalophod)")
 	filePath := flag.String("file", "", "path to the input file containing product ID ranges")
 	logLevel := flag.String("logLevel", "info", "log level for application")
 
 	flag.Parse()
+
+	var interpreter day06.PuzzleInterpreter
+
+	switch *interpreterAsStr {
+	case "human":
+		interpreter = day06.HumanMath
+	case "cephalophod":
+		interpreter = day06.CephalopodMath
+	default:
+		log.Fatalf("incorrect flag '%s' for interpreter, valid values are 'human', 'cephalophod'", *interpreterAsStr)
+	}
 
 	if *filePath == "" {
 		log.Fatalf("missing required flag: -file")
@@ -42,7 +54,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	solution, err := solver.Solve(ctx, file)
+	solution, err := solver.Solve(ctx, file, interpreter)
 
 	if err != nil {
 		logger.Fatal("failed to run day 6 problem solver", zap.Error(err))

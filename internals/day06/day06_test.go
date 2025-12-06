@@ -23,7 +23,7 @@ func TestDay6Solver(t *testing.T) {
 *   +   *   +  `
 
 		//when
-		solution, err := solver.Solve(context.Background(), strings.NewReader(input))
+		solution, err := solver.Solve(context.Background(), strings.NewReader(input), HumanMath)
 
 		//then
 		assert.NoError(t, err)
