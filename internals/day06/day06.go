@@ -99,9 +99,8 @@ func parseOperators(operatorLine string) []Section {
 
 func createProblems(sections []Section, numberLines []string) []Problem {
 	problems := []Problem{}
-	for i, section := range sections {
+	for _, section := range sections {
 		problem := Problem{
-			id:         i,
 			numberRows: []string{},
 			operator:   section.operator,
 			start:      section.start,
@@ -116,7 +115,6 @@ func createProblems(sections []Section, numberLines []string) []Problem {
 }
 
 type Problem struct {
-	id         int
 	numberRows []string
 	operator   string
 	start      int
