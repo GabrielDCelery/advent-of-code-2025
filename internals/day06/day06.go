@@ -102,13 +102,13 @@ func createProblems(sections []Section, numberLines []string) []Problem {
 	for i, section := range sections {
 		problem := Problem{
 			id:         i,
-			numsMatrix: []string{},
+			numberRows: []string{},
 			operator:   section.operator,
 			start:      section.start,
 			end:        section.end,
 		}
 		for _, numLine := range numberLines {
-			problem.numsMatrix = append(problem.numsMatrix, numLine[section.start:section.end])
+			problem.numberRows = append(problem.numberRows, numLine[section.start:section.end])
 		}
 		problems = append(problems, problem)
 	}
@@ -117,17 +117,17 @@ func createProblems(sections []Section, numberLines []string) []Problem {
 
 type Problem struct {
 	id         int
-	numsMatrix []string
+	numberRows []string
 	operator   string
 	start      int
 	end        int
 }
 
-func (p *Problem) parseNumsMatrixToNums(puzzleInterpreter PuzzleInterpreter) ([]int, error) {
+func (p *Problem) parseNumberRowsToNums(puzzleInterpreter PuzzleInterpreter) ([]int, error) {
 	switch puzzleInterpreter {
 	case HumanMath:
 		nums := []int{}
-		for _, numAsStr := range p.numsMatrix {
+		for _, numAsStr := range p.numberRows {
 			numAsStr = strings.TrimSpace(numAsStr)
 			num, err := strconv.Atoi(numAsStr)
 			if err != nil {
@@ -140,8 +140,8 @@ func (p *Problem) parseNumsMatrixToNums(puzzleInterpreter PuzzleInterpreter) ([]
 		nums := []int{}
 		for i := 0; i < (p.end - p.start); i++ {
 			var builder strings.Builder
-			for j := 0; j < len(p.numsMatrix); j++ {
-				char := p.numsMatrix[j][i]
+			for j := 0; j < len(p.numberRows); j++ {
+				char := p.numberRows[j][i]
 				if char == ' ' {
 					continue
 				}
@@ -160,7 +160,7 @@ func (p *Problem) parseNumsMatrixToNums(puzzleInterpreter PuzzleInterpreter) ([]
 }
 
 func (p *Problem) solve(puzzleInterpreter PuzzleInterpreter) (int, error) {
-	nums, err := p.parseNumsMatrixToNums(puzzleInterpreter)
+	nums, err := p.parseNumberRowsToNums(puzzleInterpreter)
 	if err != nil {
 		return 0, err
 	}
