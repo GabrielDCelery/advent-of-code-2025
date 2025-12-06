@@ -122,6 +122,12 @@ func NewProblemsContainer(puzzleInterpreter PuzzleInterpreter) *ProblemsContaine
 }
 
 func (pc *ProblemsContainer) parseInput(reader io.Reader) {
+	numberLines, operatorLine := pc.readLines(reader)
+	sections := parseOperators(operatorLine)
+	pc.createProblems(sections, numberLines)
+}
+
+func (pc *ProblemsContainer) readLines(reader io.Reader) ([]string, string) {
 	numLines := make([]string, 0)
 	operatorLine := ""
 
@@ -137,45 +143,22 @@ func (pc *ProblemsContainer) parseInput(reader io.Reader) {
 		}
 	}
 
-	start := 0
+	return numLines, operatorLine
+}
 
-	for i, run := range operatorLine {
-		char := string(run)
-		isFirstChar := i == 0
-		isOperator := char == "*" || char == "+"
-		isLastChar := i == len(operatorLine)-1
-		if isOperator && !isFirstChar {
-			end := i - 1
-			problem := Problem{
-				id:         len(pc.problems),
-				numsMatrix: []string{},
-				operator:   string(operatorLine[start]),
-				start:      start,
-				end:        end,
-			}
-			pc.problems = append(pc.problems, problem)
-			start = i
-			continue
+func (pc *ProblemsContainer) createProblems(sections []Section, numberLines []string) {
+	for i, section := range sections {
+		problem := Problem{
+			id:         i,
+			numsMatrix: []string{},
+			operator:   section.operator,
+			start:      section.start,
+			end:        section.end,
 		}
-		if isLastChar {
-			end := i + 1
-			problem := Problem{
-				id:         len(pc.problems),
-				numsMatrix: []string{},
-				operator:   string(operatorLine[start]),
-				start:      start,
-				end:        end,
-			}
-			pc.problems = append(pc.problems, problem)
-			start = end
-			continue
+		for _, numLine := range numberLines {
+			problem.numsMatrix = append(problem.numsMatrix, numLine[section.start:section.end])
 		}
-	}
-
-	for i, problem := range pc.problems {
-		for _, numLine := range numLines {
-			pc.problems[i].numsMatrix = append(pc.problems[i].numsMatrix, numLine[problem.start:problem.end])
-		}
+		pc.problems = append(pc.problems, problem)
 	}
 }
 
@@ -189,4 +172,35 @@ func (pc *ProblemsContainer) solve() (int, error) {
 		sum += result
 	}
 	return sum, nil
+}
+
+type Section struct {
+	operator string
+	start    int
+	end      int
+}
+
+func parseOperators(operatorLine string) []Section {
+	sections := []Section{}
+	start := 0
+	for i, run := range operatorLine {
+		char := string(run)
+		isOperator := char == "*" || char == "+"
+		isLastChar := i == len(operatorLine)-1
+		if isOperator && i > 0 {
+			sections = append(sections, Section{
+				operator: string(operatorLine[start]),
+				start:    start,
+				end:      i - 1,
+			})
+			start = i
+		} else if isLastChar {
+			sections = append(sections, Section{
+				operator: string(operatorLine[start]),
+				start:    start,
+				end:      i + 1,
+			})
+		}
+	}
+	return sections
 }
