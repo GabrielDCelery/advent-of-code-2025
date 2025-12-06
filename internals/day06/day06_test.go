@@ -20,7 +20,7 @@ func TestDay6Solver(t *testing.T) {
 		input := `123 328  51 64 
  45 64  387 23 
   6 98  215 314
-*   +   *   + `
+*   +   *   +  `
 
 		//when
 		solution, err := solver.Solve(context.Background(), strings.NewReader(input))
