@@ -164,25 +164,18 @@ func (p *Problem) parseNumberRowsToNums(puzzleInterpreter PuzzleInterpreter) ([]
 }
 
 func (p *Problem) solve(puzzleInterpreter PuzzleInterpreter) (int, error) {
-	nums, err := p.parseNumberRowsToNums(puzzleInterpreter)
+	numbers, err := p.parseNumberRowsToNums(puzzleInterpreter)
 	if err != nil {
 		return 0, err
 	}
-	if p.operator == "*" {
-		sum := 1
-		for _, num := range nums {
-			sum *= num
-		}
-		return sum, nil
+	switch p.operator {
+	case "*":
+		return multiplyAll(numbers), nil
+	case "+":
+		return sumAll(numbers), nil
+	default:
+		return 0, fmt.Errorf("invalid operator %s", p.operator)
 	}
-	if p.operator == "+" {
-		sum := 0
-		for _, num := range nums {
-			sum += num
-		}
-		return sum, nil
-	}
-	return 0, fmt.Errorf("invalid operator %s", p.operator)
 }
 
 func solveProblems(problems []Problem, puzzleInterpreter PuzzleInterpreter) (int, error) {
@@ -195,4 +188,20 @@ func solveProblems(problems []Problem, puzzleInterpreter PuzzleInterpreter) (int
 		sum += result
 	}
 	return sum, nil
+}
+
+func multiplyAll(numbers []int) int {
+	sum := 1
+	for _, number := range numbers {
+		sum *= number
+	}
+	return sum
+}
+
+func sumAll(numbers []int) int {
+	sum := 0
+	for _, number := range numbers {
+		sum += number
+	}
+	return sum
 }
