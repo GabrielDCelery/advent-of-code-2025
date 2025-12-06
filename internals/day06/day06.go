@@ -47,6 +47,74 @@ func (d *Day6Solver) Solve(ctx context.Context, reader io.Reader, puzzleInterpre
 	return solution, nil
 }
 
+func readLines(reader io.Reader) ([]string, string) {
+	numLines := make([]string, 0)
+	operatorLine := ""
+
+	scanner := bufio.NewScanner(reader)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		isLastLine := strings.ContainsAny(line, `+*`)
+		if isLastLine {
+			operatorLine = line
+		} else {
+			numLines = append(numLines, line)
+		}
+	}
+
+	return numLines, operatorLine
+}
+
+type Section struct {
+	operator string
+	start    int
+	end      int
+}
+
+func parseOperators(operatorLine string) []Section {
+	sections := []Section{}
+	start := 0
+	for i, run := range operatorLine {
+		char := string(run)
+		isOperator := char == "*" || char == "+"
+		isLastChar := i == len(operatorLine)-1
+		if isOperator && i > 0 {
+			sections = append(sections, Section{
+				operator: string(operatorLine[start]),
+				start:    start,
+				end:      i - 1,
+			})
+			start = i
+		} else if isLastChar {
+			sections = append(sections, Section{
+				operator: string(operatorLine[start]),
+				start:    start,
+				end:      i + 1,
+			})
+		}
+	}
+	return sections
+}
+
+func createProblems(sections []Section, numberLines []string) []Problem {
+	problems := []Problem{}
+	for i, section := range sections {
+		problem := Problem{
+			id:         i,
+			numsMatrix: []string{},
+			operator:   section.operator,
+			start:      section.start,
+			end:        section.end,
+		}
+		for _, numLine := range numberLines {
+			problem.numsMatrix = append(problem.numsMatrix, numLine[section.start:section.end])
+		}
+		problems = append(problems, problem)
+	}
+	return problems
+}
+
 type Problem struct {
 	id         int
 	numsMatrix []string
@@ -113,43 +181,6 @@ func (p *Problem) solve(puzzleInterpreter PuzzleInterpreter) (int, error) {
 	return 0, fmt.Errorf("invalid operator %s", p.operator)
 }
 
-func readLines(reader io.Reader) ([]string, string) {
-	numLines := make([]string, 0)
-	operatorLine := ""
-
-	scanner := bufio.NewScanner(reader)
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		isLastLine := strings.ContainsAny(line, `+*`)
-		if isLastLine {
-			operatorLine = line
-		} else {
-			numLines = append(numLines, line)
-		}
-	}
-
-	return numLines, operatorLine
-}
-
-func createProblems(sections []Section, numberLines []string) []Problem {
-	problems := []Problem{}
-	for i, section := range sections {
-		problem := Problem{
-			id:         i,
-			numsMatrix: []string{},
-			operator:   section.operator,
-			start:      section.start,
-			end:        section.end,
-		}
-		for _, numLine := range numberLines {
-			problem.numsMatrix = append(problem.numsMatrix, numLine[section.start:section.end])
-		}
-		problems = append(problems, problem)
-	}
-	return problems
-}
-
 func solveProblems(problems []Problem, puzzleInterpreter PuzzleInterpreter) (int, error) {
 	sum := 0
 	for _, problem := range problems {
@@ -160,35 +191,4 @@ func solveProblems(problems []Problem, puzzleInterpreter PuzzleInterpreter) (int
 		sum += result
 	}
 	return sum, nil
-}
-
-type Section struct {
-	operator string
-	start    int
-	end      int
-}
-
-func parseOperators(operatorLine string) []Section {
-	sections := []Section{}
-	start := 0
-	for i, run := range operatorLine {
-		char := string(run)
-		isOperator := char == "*" || char == "+"
-		isLastChar := i == len(operatorLine)-1
-		if isOperator && i > 0 {
-			sections = append(sections, Section{
-				operator: string(operatorLine[start]),
-				start:    start,
-				end:      i - 1,
-			})
-			start = i
-		} else if isLastChar {
-			sections = append(sections, Section{
-				operator: string(operatorLine[start]),
-				start:    start,
-				end:      i + 1,
-			})
-		}
-	}
-	return sections
 }
