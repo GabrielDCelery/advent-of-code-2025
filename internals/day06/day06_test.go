@@ -11,7 +11,7 @@ import (
 )
 
 func TestDay6Solver(t *testing.T) {
-	t.Run("Solves day 6 challenge", func(t *testing.T) {
+	t.Run("Solves day 6 challenge part 1", func(t *testing.T) {
 		t.Parallel()
 		//given
 		logger := zaptest.NewLogger(t, zaptest.Level(zapcore.DebugLevel))
@@ -28,5 +28,24 @@ func TestDay6Solver(t *testing.T) {
 		//then
 		assert.NoError(t, err)
 		assert.Equal(t, 4277556, solution)
+	})
+
+	t.Run("Solves day 6 challenge part 2", func(t *testing.T) {
+		t.Parallel()
+		//given
+		logger := zaptest.NewLogger(t, zaptest.Level(zapcore.DebugLevel))
+		defer logger.Sync()
+		solver, _ := NewDay6Solver(logger)
+		input := `123 328  51 64 
+ 45 64  387 23 
+  6 98  215 314
+*   +   *   +  `
+
+		//when
+		solution, err := solver.Solve(context.Background(), strings.NewReader(input), CephalopodMath)
+
+		//then
+		assert.NoError(t, err)
+		assert.Equal(t, 3263827, solution)
 	})
 }

@@ -66,8 +66,16 @@ func (p *Problem) parseNumsMatrixToNums(puzzleInterpreter PuzzleInterpreter) ([]
 		return nums, nil
 	case CephalopodMath:
 		nums := []int{}
-		for _, numAsStr := range p.numsMatrix {
-			numAsStr = strings.TrimSpace(numAsStr)
+		for i := 0; i < (p.end - p.start); i++ {
+			numAsStr := ""
+			for j := 0; j < len(p.numsMatrix); j++ {
+				char := p.numsMatrix[j][i]
+				charAsStr := string(char)
+				if charAsStr == " " {
+					continue
+				}
+				numAsStr = numAsStr + charAsStr
+			}
 			num, err := strconv.Atoi(numAsStr)
 			if err != nil {
 				return nil, fmt.Errorf("invalid integer '%s'", numAsStr)
