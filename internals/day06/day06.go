@@ -51,21 +51,36 @@ type Problem struct {
 	end        int
 }
 
-func (p *Problem) parseNumsMatrixToNums() ([]int, error) {
-	nums := []int{}
-	for _, numAsStr := range p.numsMatrix {
-		numAsStr = strings.TrimSpace(numAsStr)
-		num, err := strconv.Atoi(numAsStr)
-		if err != nil {
-			return nil, fmt.Errorf("invalid integer '%s'", numAsStr)
+func (p *Problem) parseNumsMatrixToNums(puzzleInterpreter PuzzleInterpreter) ([]int, error) {
+	switch puzzleInterpreter {
+	case HumanMath:
+		nums := []int{}
+		for _, numAsStr := range p.numsMatrix {
+			numAsStr = strings.TrimSpace(numAsStr)
+			num, err := strconv.Atoi(numAsStr)
+			if err != nil {
+				return nil, fmt.Errorf("invalid integer '%s'", numAsStr)
+			}
+			nums = append(nums, num)
 		}
-		nums = append(nums, num)
+		return nums, nil
+	case CephalopodMath:
+		nums := []int{}
+		for _, numAsStr := range p.numsMatrix {
+			numAsStr = strings.TrimSpace(numAsStr)
+			num, err := strconv.Atoi(numAsStr)
+			if err != nil {
+				return nil, fmt.Errorf("invalid integer '%s'", numAsStr)
+			}
+			nums = append(nums, num)
+		}
+		return nums, nil
 	}
-	return nums, nil
+	return nil, fmt.Errorf("invalid interpreter '%d'", puzzleInterpreter)
 }
 
-func (p *Problem) solve() (int, error) {
-	nums, err := p.parseNumsMatrixToNums()
+func (p *Problem) solve(puzzleInterpreter PuzzleInterpreter) (int, error) {
+	nums, err := p.parseNumsMatrixToNums(puzzleInterpreter)
 	if err != nil {
 		return 0, err
 	}
@@ -159,7 +174,7 @@ func (pc *ProblemsContainer) parseInput(reader io.Reader) {
 func (pc *ProblemsContainer) solve() (int, error) {
 	sum := 0
 	for _, problem := range pc.problems {
-		result, err := problem.solve()
+		result, err := problem.solve(pc.puzzleInterpreter)
 		if err != nil {
 			return 0, err
 		}
