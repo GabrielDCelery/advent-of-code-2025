@@ -103,8 +103,6 @@ func createProblems(sections []Section, numberLines []string) []Problem {
 		problem := Problem{
 			numberRows: []string{},
 			operator:   section.operator,
-			start:      section.start,
-			end:        section.end,
 		}
 		for _, numLine := range numberLines {
 			problem.numberRows = append(problem.numberRows, numLine[section.start:section.end])
@@ -117,8 +115,16 @@ func createProblems(sections []Section, numberLines []string) []Problem {
 type Problem struct {
 	numberRows []string
 	operator   string
-	start      int
-	end        int
+}
+
+func (p *Problem) getWidth() int {
+	width := 0
+	for _, numberRow := range p.numberRows {
+		if len(numberRow) > width {
+			width = len(numberRow)
+		}
+	}
+	return width
 }
 
 func (p *Problem) parseNumberRowsToNums(puzzleInterpreter PuzzleInterpreter) ([]int, error) {
@@ -136,7 +142,7 @@ func (p *Problem) parseNumberRowsToNums(puzzleInterpreter PuzzleInterpreter) ([]
 		return nums, nil
 	case CephalopodMath:
 		nums := []int{}
-		for i := 0; i < (p.end - p.start); i++ {
+		for i := 0; i < p.getWidth(); i++ {
 			var builder strings.Builder
 			for j := 0; j < len(p.numberRows); j++ {
 				char := p.numberRows[j][i]
