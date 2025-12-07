@@ -48,5 +48,5 @@ func main() {
 		logger.Fatal("failed to run day 7 problem solver", zap.Error(err))
 	}
 
-	logger.Info("solved day 7 problem", zap.Int("solution", solution))
+	logger.Info("solved day 7 problem", zap.Int("SplittersCrossedCount", solution.SplittersCrossedCount), zap.Int("UniqueBeamsCount", solution.UniqueBeamsCount))
 }
