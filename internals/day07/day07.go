@@ -59,6 +59,8 @@ func (d *Day7Solver) Solve(ctx context.Context, reader io.Reader) (Solution, err
 	explorer := NewBeamExplorer(teleporter)
 	splittersCrossedCount, uniqueBeamsCount := explorer.explore()
 
+	d.logger.Debug("ran exploration", zap.String("explorer", fmt.Sprintf("%+v", explorer)))
+
 	return Solution{
 		SplittersCrossedCount: splittersCrossedCount,
 		UniqueBeamsCount:      uniqueBeamsCount,
@@ -135,12 +137,13 @@ func (b *BeamExplorer) moveHeadRight() {
 func (b *BeamExplorer) moveHeadBackToLastFullyUnexploredSplitter() {
 	for {
 		if len(b.splittersVisited) == 0 {
+			b.head = Coordinate{x: b.teleporter.beamSource.x, y: b.teleporter.beamSource.y}
 			return
 		}
 		last := b.splittersVisited[len(b.splittersVisited)-1]
-		b.splittersVisited = b.splittersVisited[:len(b.splittersVisited)-1]
 		key := last.key()
 		if b.splitterStatsMap[key].hasExploredLeft && b.splitterStatsMap[key].hasExploredRight {
+			b.splittersVisited = b.splittersVisited[:len(b.splittersVisited)-1]
 			continue
 		} else {
 			b.head = Coordinate{x: last.x, y: last.y}
@@ -180,9 +183,6 @@ func (b *BeamExplorer) explore() (int, int) {
 		// if the current path we are exploring made us leave the teleporter we have to go back
 		if !b.isHeadInsideTeleporter() {
 			b.moveHeadBackToLastFullyUnexploredSplitter()
-			if len(b.splittersVisited) == 0 {
-				break
-			}
 			continue
 		}
 
@@ -194,7 +194,14 @@ func (b *BeamExplorer) explore() (int, int) {
 			b.moveHeadBackToLastFullyUnexploredSplitter()
 			// if there are no more unexplored splitters we have finished
 			if len(b.splittersVisited) == 0 {
-				break
+				// Check if we're back at the source and the first splitter is fully explored
+				if b.head.x == b.teleporter.beamSource.x && b.head.y == b.teleporter.beamSource.y {
+					// Move down to first splitter and check if fully explored
+					firstSplitterKey := fmt.Sprintf("%d-%d", 7, 2)
+					if stats, ok := b.splitterStatsMap[firstSplitterKey]; ok && stats.hasExploredLeft && stats.hasExploredRight {
+						break
+					}
+				}
 			}
 			continue
 		}
@@ -220,24 +227,18 @@ func (b *BeamExplorer) explore() (int, int) {
 				// This splitter was fully explored in a previous beam
 				// Add its cached beam count to our total
 				uniqueBeamsCount += splitter.numOfUniqueBeamsItGenerates
-				// Also increment beam counts for all parent splitters in current path
-				for _, parentSplitter := range b.splittersVisited {
-					parentKey := parentSplitter.key()
-					parentStats := b.splitterStatsMap[parentKey]
-					parentStats.numOfUniqueBeamsItGenerates += splitter.numOfUniqueBeamsItGenerates
-					b.splitterStatsMap[parentKey] = parentStats
-				}
+				// But DON'T increment parent splitters - that causes overcounting
 				b.moveHeadBackToLastFullyUnexploredSplitter()
 				if len(b.splittersVisited) == 0 {
 					break
 				}
 			} else if splitter.hasExploredLeft {
-				splitter.hasExploredLeft = true
+				splitter.hasExploredRight = true
 				b.splitterStatsMap[key] = splitter
 				b.splittersVisited = append(b.splittersVisited, Coordinate{x: b.head.x, y: b.head.y})
 				b.moveHeadRight()
 			} else {
-				splitter.hasExploredRight = true
+				splitter.hasExploredLeft = true
 				b.splitterStatsMap[key] = splitter
 				b.splittersVisited = append(b.splittersVisited, Coordinate{x: b.head.x, y: b.head.y})
 				b.moveHeadLeft()
