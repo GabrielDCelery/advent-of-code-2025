@@ -56,7 +56,8 @@ func (d *Day7Solver) Solve(ctx context.Context, reader io.Reader) (Solution, err
 
 	d.logger.Debug("generated teleporter diagram", zap.String("teleporter", fmt.Sprintf("%+v", teleporter)))
 
-	splittersCrossedCount, uniqueBeamsCount := traceBeams(teleporter)
+	explorer := NewBeamExplorer(teleporter)
+	splittersCrossedCount, uniqueBeamsCount := explorer.explore()
 
 	return Solution{
 		SplittersCrossedCount: splittersCrossedCount,
@@ -71,6 +72,10 @@ type Coordinate struct {
 
 func (c Coordinate) isWithinBoundaries(grid *[][]CellType) bool {
 	return c.x >= 0 && c.y >= 0 && c.x < len((*grid)[0]) && c.y < len(*grid)
+}
+
+func (c Coordinate) key() string {
+	return fmt.Sprintf("%d-%d", c.x, c.y)
 }
 
 type CellType int
@@ -93,43 +98,151 @@ func NewTeleporter() *Teleporter {
 	}
 }
 
-func traceBeams(teleporter *Teleporter) (int, int) {
-	uniqueSplittersVisited := make(map[string]bool, 0)
-	beamCount := 0
+type SpitterStats struct {
+	numOfUniqueBeamsItGenerates int
+	hasExploredLeft             bool
+	hasExploredRight            bool
+}
 
-	stack := []Coordinate{{x: teleporter.beamSource.x, y: teleporter.beamSource.y}}
+type BeamExplorer struct {
+	teleporter       *Teleporter
+	head             Coordinate
+	splittersVisited []Coordinate
+	splitterStatsMap map[string]SpitterStats
+}
 
-	for len(stack) > 0 {
-		current := stack[len(stack)-1]
+func NewBeamExplorer(teleporter *Teleporter) *BeamExplorer {
+	return &BeamExplorer{
+		teleporter:       teleporter,
+		head:             Coordinate{x: teleporter.beamSource.x, y: teleporter.beamSource.y},
+		splittersVisited: []Coordinate{},
+		splitterStatsMap: make(map[string]SpitterStats, 0),
+	}
+}
 
-		// if the current beam reached the end of the teleporter we finished tracing it
-		if current.y == len(teleporter.cellMatrix)-1 {
-			beamCount += 1
-			stack = stack[:len(stack)-1]
-			continue
+func (b *BeamExplorer) moveHeadDown() {
+	b.head = Coordinate{x: b.head.x, y: b.head.y + 1}
+}
+
+func (b *BeamExplorer) moveHeadLeft() {
+	b.head = Coordinate{x: b.head.x - 1, y: b.head.y}
+}
+
+func (b *BeamExplorer) moveHeadRight() {
+	b.head = Coordinate{x: b.head.x + 1, y: b.head.y}
+}
+
+func (b *BeamExplorer) moveHeadBackToLastFullyUnexploredSplitter() {
+	for {
+		if len(b.splittersVisited) == 0 {
+			return
 		}
-
-		// if the current beam is on an empty cell move it down
-		if teleporter.cellMatrix[current.y][current.x] == Empty {
-			next := Coordinate{x: current.x, y: current.y + 1}
-			stack = append(stack[:len(stack)-1], next)
+		last := b.splittersVisited[len(b.splittersVisited)-1]
+		b.splittersVisited = b.splittersVisited[:len(b.splittersVisited)-1]
+		key := last.key()
+		if b.splitterStatsMap[key].hasExploredLeft && b.splitterStatsMap[key].hasExploredRight {
 			continue
+		} else {
+			b.head = Coordinate{x: last.x, y: last.y}
+			return
 		}
+	}
+}
 
-		// if we are on a splitter mark the splitter visited and split the beam
-		if teleporter.cellMatrix[current.y][current.x] == Splitter {
-			key := fmt.Sprintf("%d-%d", current.x, current.y)
-			uniqueSplittersVisited[key] = true
-			left := Coordinate{x: current.x - 1, y: current.y}
-			right := Coordinate{x: current.x + 1, y: current.y}
-			stack = stack[:len(stack)-1]
-			if left.isWithinBoundaries(&teleporter.cellMatrix) {
-				stack = append(stack, left)
+func (b *BeamExplorer) hasReachedEndOfTeleporter() bool {
+	return b.head.y == len(b.teleporter.cellMatrix)-1
+}
+
+func (b *BeamExplorer) getHeadCellType() CellType {
+	return b.teleporter.cellMatrix[b.head.y][b.head.x]
+}
+
+func (b *BeamExplorer) isHeadInsideTeleporter() bool {
+	return b.head.isWithinBoundaries(&b.teleporter.cellMatrix)
+}
+
+func (b *BeamExplorer) incrementHowManyUniqueBeamsSplittersCanGenerate() {
+	for _, splitter := range b.splittersVisited {
+		key := splitter.key()
+		splitterStats := b.splitterStatsMap[key]
+		b.splitterStatsMap[key] = SpitterStats{
+			hasExploredLeft:             splitterStats.hasExploredLeft,
+			hasExploredRight:            splitterStats.hasExploredRight,
+			numOfUniqueBeamsItGenerates: splitterStats.numOfUniqueBeamsItGenerates + 1,
+		}
+	}
+}
+
+func (b *BeamExplorer) explore() (int, int) {
+	uniqueBeamsCount := 0
+
+	for {
+		// if the current path we are exploring made us leave the teleporter we have to go back
+		if !b.isHeadInsideTeleporter() {
+			b.moveHeadBackToLastFullyUnexploredSplitter()
+			if len(b.splittersVisited) == 0 {
+				break
 			}
-			if right.isWithinBoundaries(&teleporter.cellMatrix) {
-				stack = append(stack, right)
+			continue
+		}
+
+		// it the current beam reached the end of the teleporter we finshed tracing it
+		if b.hasReachedEndOfTeleporter() {
+			uniqueBeamsCount += 1
+			b.incrementHowManyUniqueBeamsSplittersCanGenerate()
+			// move back to the head to the last unexplored splitter so we can continue exploring
+			b.moveHeadBackToLastFullyUnexploredSplitter()
+			// if there are no more unexplored splitters we have finished
+			if len(b.splittersVisited) == 0 {
+				break
+			}
+			continue
+		}
+
+		if b.getHeadCellType() == Empty {
+			b.moveHeadDown()
+			continue
+		}
+
+		if b.getHeadCellType() == Splitter {
+			key := b.head.key()
+			splitter, ok := b.splitterStatsMap[key]
+
+			if !ok {
+				splitter = SpitterStats{
+					hasExploredLeft:             false,
+					hasExploredRight:            false,
+					numOfUniqueBeamsItGenerates: 0,
+				}
+			}
+
+			if splitter.hasExploredLeft && splitter.hasExploredRight {
+				// This splitter was fully explored in a previous beam
+				// Add its cached beam count to our total
+				uniqueBeamsCount += splitter.numOfUniqueBeamsItGenerates
+				// Also increment beam counts for all parent splitters in current path
+				for _, parentSplitter := range b.splittersVisited {
+					parentKey := parentSplitter.key()
+					parentStats := b.splitterStatsMap[parentKey]
+					parentStats.numOfUniqueBeamsItGenerates += splitter.numOfUniqueBeamsItGenerates
+					b.splitterStatsMap[parentKey] = parentStats
+				}
+				b.moveHeadBackToLastFullyUnexploredSplitter()
+				if len(b.splittersVisited) == 0 {
+					break
+				}
+			} else if splitter.hasExploredLeft {
+				splitter.hasExploredLeft = true
+				b.splitterStatsMap[key] = splitter
+				b.splittersVisited = append(b.splittersVisited, Coordinate{x: b.head.x, y: b.head.y})
+				b.moveHeadRight()
+			} else {
+				splitter.hasExploredRight = true
+				b.splitterStatsMap[key] = splitter
+				b.splittersVisited = append(b.splittersVisited, Coordinate{x: b.head.x, y: b.head.y})
+				b.moveHeadLeft()
 			}
 		}
 	}
-	return len(uniqueSplittersVisited), beamCount
+	return len(b.splitterStatsMap), uniqueBeamsCount
 }
