@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"sync"
 
 	"go.uber.org/zap"
 )
@@ -57,14 +56,8 @@ func (d *Day7Solver) Solve(ctx context.Context, reader io.Reader) (Solution, err
 
 	d.logger.Debug("generated teleporter diagram", zap.String("teleporter", fmt.Sprintf("%+v", teleporter)))
 
-	beamTracer := NewBeamTracer(teleporter)
+	splittersCrossedCount, uniqueBeamsCount := traceBeams(teleporter)
 
-	d.logger.Debug("initialised beam tracer", zap.String("beamTracer", fmt.Sprintf("%+v", beamTracer)))
-
-	beamTracer.traceBeamsFromSource()
-
-	splittersCrossedCount := beamTracer.countNumOfSplittersCrossed()
-	uniqueBeamsCount := beamTracer.getNumOfBeams()
 	return Solution{
 		SplittersCrossedCount: splittersCrossedCount,
 		UniqueBeamsCount:      uniqueBeamsCount,
@@ -100,107 +93,43 @@ func NewTeleporter() *Teleporter {
 	}
 }
 
-type Beam []Coordinate
+func traceBeams(teleporter *Teleporter) (int, int) {
+	uniqueSplittersVisited := make(map[string]bool, 0)
+	beamCount := 0
 
-func (b *Beam) clone() Beam {
-	clone := make(Beam, len(*b))
-	copy(clone, *b)
-	return clone
-}
+	stack := []Coordinate{{x: teleporter.beamSource.x, y: teleporter.beamSource.y}}
 
-type BeamTracer struct {
-	beams      []Beam
-	cellMatrix [][]bool
-	teleporter *Teleporter
-}
+	for len(stack) > 0 {
+		current := stack[len(stack)-1]
 
-func NewBeamTracer(teleporter *Teleporter) *BeamTracer {
-	height := len(teleporter.cellMatrix)
-	width := len((teleporter.cellMatrix)[0])
-	cellMatrix := [][]bool{}
-	for range height {
-		row := make([]bool, width)
-		cellMatrix = append(cellMatrix, row)
-	}
-	return &BeamTracer{
-		beams:      []Beam{},
-		cellMatrix: cellMatrix,
-		teleporter: teleporter,
-	}
-}
-
-func (b *BeamTracer) traceSingleBeam(beam Beam, validBeamsChan chan<- Beam, sem chan struct{}, wg *sync.WaitGroup) {
-	sem <- struct{}{}
-	defer func() { <-sem }()
-	defer wg.Done()
-
-	for {
-		head := beam[len(beam)-1]
-
-		hasReachedEnd := head.y == len(b.teleporter.cellMatrix)-1
-
-		if hasReachedEnd {
-			validBeamsChan <- beam
-			return
-		}
-
-		if b.teleporter.cellMatrix[head.y][head.x] == Empty {
-			next := Coordinate{x: head.x, y: head.y + 1}
-			beam = append(beam, next)
+		// if the current beam reached the end of the teleporter we finished tracing it
+		if current.y == len(teleporter.cellMatrix)-1 {
+			beamCount += 1
+			stack = stack[:len(stack)-1]
 			continue
 		}
 
-		if b.teleporter.cellMatrix[head.y][head.x] == Splitter {
-			left := Coordinate{x: head.x - 1, y: head.y}
-			if left.isWithinBoundaries(&b.teleporter.cellMatrix) {
-				wg.Add(1)
-				go b.traceSingleBeam(append(beam.clone(), left), validBeamsChan, sem, wg)
-			}
-			right := Coordinate{x: head.x + 1, y: head.y}
-			if right.isWithinBoundaries(&b.teleporter.cellMatrix) {
-				wg.Add(1)
-				go b.traceSingleBeam(append(beam.clone(), right), validBeamsChan, sem, wg)
-			}
-			return
+		// if the current beam is on an empty cell move it down
+		if teleporter.cellMatrix[current.y][current.x] == Empty {
+			next := Coordinate{x: current.x, y: current.y + 1}
+			stack = append(stack[:len(stack)-1], next)
+			continue
 		}
-	}
-}
 
-func (b *BeamTracer) traceBeamsFromSource() {
-	var wg sync.WaitGroup
-	validBeamsChan := make(chan Beam)
-	sem := make(chan struct{}, 5)
-
-	beam := Beam{Coordinate{x: b.teleporter.beamSource.x, y: b.teleporter.beamSource.y}}
-
-	wg.Add(1)
-	go b.traceSingleBeam(beam, validBeamsChan, sem, &wg)
-
-	go func() {
-		wg.Wait()
-		close(validBeamsChan)
-	}()
-
-	validBeams := []Beam{}
-	for validBeam := range validBeamsChan {
-		validBeams = append(validBeams, validBeam)
-	}
-	b.beams = validBeams
-}
-
-func (b *BeamTracer) countNumOfSplittersCrossed() int {
-	visitedSplitters := make(map[string]bool, 0)
-	for _, beam := range b.beams {
-		for _, coordinate := range beam {
-			if b.teleporter.cellMatrix[coordinate.y][coordinate.x] == Splitter {
-				key := fmt.Sprintf("%d-%d", coordinate.x, coordinate.y)
-				visitedSplitters[key] = true
+		// if we are on a splitter mark the splitter visited and split the beam
+		if teleporter.cellMatrix[current.y][current.x] == Splitter {
+			key := fmt.Sprintf("%d-%d", current.x, current.y)
+			uniqueSplittersVisited[key] = true
+			left := Coordinate{x: current.x - 1, y: current.y}
+			right := Coordinate{x: current.x + 1, y: current.y}
+			stack = stack[:len(stack)-1]
+			if left.isWithinBoundaries(&teleporter.cellMatrix) {
+				stack = append(stack, left)
+			}
+			if right.isWithinBoundaries(&teleporter.cellMatrix) {
+				stack = append(stack, right)
 			}
 		}
 	}
-	return len(visitedSplitters)
-}
-
-func (b *BeamTracer) getNumOfBeams() int {
-	return len(b.beams)
+	return len(uniqueSplittersVisited), beamCount
 }
